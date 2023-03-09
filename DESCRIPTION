@@ -1,0 +1,22 @@
+Package: mvregrp
+Title: Multivariate grouped random effect probit model estimation
+Version: 0.0.1
+Authors@R: c(
+    person("Siliang", "Zhang",
+           role = c("aut", "cre"),
+           email = "zhangsiliang123@gmail.com",
+           comment = c(ORCID = "0000-0002-2641-4944")),
+    person("Fiona", "steele", role = "aut")
+    )
+Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
+Description: Efficient Gibbs sampling procedures for multivariate grouped random 
+             effect probit model estimation.
+Imports: 
+      truncnorm,
+      mvtnorm,
+      MCMCpack,
+      matrixcalc
+License: use_gpl3_license()
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
