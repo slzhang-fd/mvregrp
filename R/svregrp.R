@@ -1,7 +1,7 @@
 #' @export
 svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
-                                   hit_ind, max_steps,
-                                   cor_step_size = 0.01){
+                          hit_ind, 
+                          max_steps, cor_step_size = 0.01){
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -31,10 +31,10 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
   VH_all <- matrix(rnorm(hit_num*K),hit_num,K)
   
   ## initialize parameters
-  coeffs <- matrix(0, cov_num, K)
+  coeffs <- matrix(0, mean_cov_num, K)
   sigma2_e <- sigma2_v <- sigma2_u <- 1
   
-  coeffs_all <- matrix(0, max_steps, cov_num*K)
+  coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
   sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
   # Y_pos_ind <- Y==1
   # Y_zero_ind <- Y==0
@@ -65,21 +65,22 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
     U_all <- sample_lv_ge(U_all, sigma2_e_inv, sigma2_u_inv, u_len,
                           rowsum(Y_star - Xbeta - VH_all[hit_ind,],
                                  i_ind, reorder = T))
-    # sample V
+    # # sample V
     VH_all <- sample_lv_grp(VH_all, sigma2_e_inv, sigma2_v_inv,
                             sh_len, sh_h_mapper, hit_len,
                             rowsum(Y_star - Xbeta - U_all[i_ind,],
                                    hit_ind, reorder = T))
     # update parameters
     params <- sample_params_he(x_covs, XtX, Y_star, U_all, VH_all, coeffs,
-                               sigma_u, sigma_v, hit_ind, i_ind, cor_step_size)
+                               sigma2_e, sigma2_u, sigma2_v, 
+                               i_ind, hit_ind, cor_step_size)
     coeffs <- params$coeffs
     sigma2_u <- params$sigma2_u
     sigma2_v <- params$sigma2_v
     sigma2_e <- params$sigma2_e
     
     # store results
-    coeffs_all[iter,] <- coeffs
+    coeffs_all[iter,] <- c(coeffs)
     sigma2_e_all[iter] <- sigma2_e
     sigma2_u_all[iter] <- sigma2_u
     sigma2_v_all[iter] <- sigma2_v
@@ -97,7 +98,6 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
   return(list('coeffs_all'=coeffs_all,
               'sigma2_e_all'=sigma2_e_all,
               'sigma2_u_all'=sigma2_u_all,
-              'Sigma_v_all'=Sigma_v_all,
               'sigma2_v_all'=sigma2_v_all,
               'U_all'=U_all,
               'VH_all'=VH_all))
