@@ -1,7 +1,7 @@
 #' @export
-svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
-                          hit_ind, 
-                          max_steps, cor_step_size = 0.01){
+svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
+                          i_ind, sh_ind, hit_ind, 
+                          max_steps, cor_step_size){
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -13,7 +13,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
   hit_num <- max(hit_ind)
   
   mean_cov_num <- ncol(x_covs)
-  # corr_cov_num <- ncol(z_covs)
+  corr_cov_num <- ncol(z_covs) - 3
   
   ## table for unique superhousehold id -> household id
   tb_sh_hit <- unique(data.frame(sh_ind, hit_ind))
@@ -31,13 +31,14 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
   VH_all <- matrix(rnorm(hit_num*K),hit_num,K)
   
   ## initialize parameters
-  coeffs <- matrix(0, mean_cov_num, K)
+  mean_coeffs <- matrix(0, mean_cov_num, K)
+  corr_coeffs <- matrix(0, corr_cov_num, K)
+  # corr_coeffs <- matrix(c(0.1, 0.01, 0.1, 0.1, 0.1, -0.01, 0.02), ncol = 1)
   sigma2_e <- sigma2_v <- sigma2_u <- 1
   
-  coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
+  mean_coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
+  corr_coeffs_all <- matrix(0, max_steps, corr_cov_num*K)
   sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
-  # Y_pos_ind <- Y==1
-  # Y_zero_ind <- Y==0
   XtX <- t(x_covs)%*%x_covs
   
   ## for plotting progress bar
@@ -46,11 +47,11 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
   extra <- 6
   width <- 30
   time <- remainining <- 0
-  rejection_rate <- 0
+  rejection_rate <- rep(0, 8)
   for(iter in 1:max_steps){
     init[iter] <- Sys.time()
     step <- round(iter / max_steps * (width - extra))
-    text <- sprintf('|%s%s|% 3s%% | Execution time:%s | Estimated time remaining:%s | rejection rate:%.3f       ',
+    text <- sprintf('\r|%s%s|% 3s%% | Execution time:%s | Estimated time remaining:%s | rejection rate:%.3f       ',
                     strrep('=', step), strrep(' ', width - step - extra),
                     round(iter / max_steps * 100), my_seconds_to_period(time),
                     my_seconds_to_period(remainining), rejection_rate)
@@ -59,7 +60,8 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
     sigma2_u_inv <- 1.0 / sigma2_u
     sigma2_v_inv <- 1.0 / sigma2_v
     
-    Xbeta <- x_covs %*% coeffs
+    Xbeta <- x_covs %*% mean_coeffs
+    Zbeta <- z_covs[,4:(3+corr_cov_num)] %*% corr_coeffs
     ## stochastic E step
     # sample U
     U_all <- sample_lv_ge(U_all, sigma2_e_inv, sigma2_u_inv, u_len,
@@ -67,20 +69,24 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
                                  i_ind, reorder = T))
     # # sample V
     VH_all <- sample_lv_grp(VH_all, sigma2_e_inv, sigma2_v_inv,
-                            sh_len, sh_h_mapper, hit_len,
+                            sh_len, sh_h_mapper, hit_len, Zbeta, z_covs[,1],
                             rowsum(Y_star - Xbeta - U_all[i_ind,],
                                    hit_ind, reorder = T))
     # update parameters
-    params <- sample_params_he(x_covs, XtX, Y_star, U_all, VH_all, coeffs,
+    params <- sample_params_he(x_covs, z_covs, XtX, Y_star, U_all, VH_all, 
+                               mean_coeffs, corr_coeffs,
                                sigma2_e, sigma2_u, sigma2_v, 
-                               i_ind, hit_ind, cor_step_size)
-    coeffs <- params$coeffs
+                               i_ind, hit_ind, sh_len, sh_h_mapper,
+                               cor_step_size)
+    mean_coeffs <- params$mean_coeffs
+    corr_coeffs <- params$corr_coeffs
     sigma2_u <- params$sigma2_u
     sigma2_v <- params$sigma2_v
     sigma2_e <- params$sigma2_e
     
     # store results
-    coeffs_all[iter,] <- c(coeffs)
+    mean_coeffs_all[iter,] <- c(mean_coeffs)
+    corr_coeffs_all[iter,] <- c(corr_coeffs)
     sigma2_e_all[iter] <- sigma2_e
     sigma2_u_all[iter] <- sigma2_u
     sigma2_v_all[iter] <- sigma2_v
@@ -91,11 +97,12 @@ svregrp_Gibbs <- function(Y_star, x_covs, i_ind, sh_ind,
     est <- max_steps * (mean(end[end != 0] - init[init != 0])) - time
     remainining <- round(est, 0)
     cat(if (iter == max_steps) '\n' else '\r')
-    # if(iter %% 100 == 0 && K > 1)
-    #   rejection_rate = mean(diff(Sigma_e_all[(iter-99):iter,2])==0)
+    if(iter %% 100 == 0)
+      rejection_rate = mean(diff(corr_coeffs_all[(iter-99):iter,])==0)
     
   }
-  return(list('coeffs_all'=coeffs_all,
+  return(list('mean_coeffs_all'=mean_coeffs_all,
+              'corr_coeffs_all'=corr_coeffs_all,
               'sigma2_e_all'=sigma2_e_all,
               'sigma2_u_all'=sigma2_u_all,
               'sigma2_v_all'=sigma2_v_all,

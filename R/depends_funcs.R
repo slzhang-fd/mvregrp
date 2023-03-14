@@ -13,7 +13,8 @@ sample_lv_ge <- function(X_all, sigma2_e_inv, sigma2_x_inv, x_len, temp){
   X_all
 }
 sample_lv_grp <- function(VH_all, sigma2_e_inv, sigma2_v_inv,
-                          sh_len, sh_h_mapper, hit_len, temp){
+                          sh_len, sh_h_mapper, hit_len, Zbeta,
+                          z_sh_ind, temp){
   # temp <- rowsum(Y_star - Xbeta - U_all[i_ind], hit_ind, reorder = T)
   ## calculate posterior covariance matrices for v_s of superhousehold groups
   ## for n_s = 1 (superhousehold contains only 1 house)
@@ -31,26 +32,33 @@ sample_lv_grp <- function(VH_all, sigma2_e_inv, sigma2_v_inv,
   for(sh_loc in which(sh_len!=1)){
     h_loc <- which(sh_h_mapper == sh_loc)
     Sigma_s_inv <- diag(hit_len[h_loc] * sigma2_e_inv)
-    Sigma_vs_inv <- sigma2_v_inv * diag(length(h_loc))
+    # Sigma_vs_inv <- sigma2_v_inv * diag(length(h_loc))
+    z_loc <- which(z_sh_ind == sh_loc)
+    rho <- Zbeta[z_loc]
+    R <- diag(length(h_loc))
+    R[lower.tri(R)] <- rho
+    R <- R + t(R) - diag(diag(R))
+    Sigma_vs_inv <- sigma2_v_inv * solve(R)
     Sigma_vs_cond <- solve(Sigma_s_inv + Sigma_vs_inv)
     mu_vs_cond <- Sigma_vs_cond %*% temp[h_loc,] * sigma2_e_inv
-    # cat(length(h_loc), dim(mu_vs_cond), "\n")
     VH_all[h_loc,] <- mu_vs_cond + t(rmvnorm(n=1, sigma = Sigma_vs_cond))
   }
   VH_all
 }
 #' @noRd
-sample_params_he <- function(x_covs, XtX, Y_star, U_all, VH_all, coeffs,
+sample_params_he <- function(x_covs, z_covs, XtX, Y_star, U_all, VH_all, 
+                             mean_coeffs, corr_coeffs,
                              sigma2_e, sigma2_u, sigma2_v,
-                             i_ind, hit_ind, cor_step_size){
+                             i_ind, hit_ind, sh_len, sh_h_mapper,
+                             cor_step_size){
   ## sample coeffs, sigma2_e, sigma2_u, sigma2_v
-  p <- nrow(coeffs)
+  p <- nrow(mean_coeffs)
   ## sample coeffs
-  coeffs <- sample_coeffs(x_covs, XtX, Y_star - U_all[i_ind,] - VH_all[hit_ind,],
+  mean_coeffs <- sample_coeffs(x_covs, XtX, Y_star - U_all[i_ind,] - VH_all[hit_ind,],
                           matrix(1.0 / sigma2_e))
   
   ## sample sigma2_e
-  sigma2_e <- sample_sigma2(Y_star - x_covs%*% coeffs - U_all[i_ind,] - VH_all[hit_ind,])
+  sigma2_e <- sample_sigma2(Y_star - x_covs%*% mean_coeffs - U_all[i_ind,] - VH_all[hit_ind,])
 
   ## sample sigma2_u
   sigma2_u <- sample_sigma2(U_all)
@@ -59,11 +67,67 @@ sample_params_he <- function(x_covs, XtX, Y_star, U_all, VH_all, coeffs,
   sigma2_v <- sample_sigma2(VH_all)
   
   ## sample R_coeffs (R_vs)
+  corr_coeffs <- sample_corr_coeffs_MH(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                       sh_len, sh_h_mapper, cor_step_size)
   
-  list('coeffs' = coeffs,
+  list('mean_coeffs' = mean_coeffs,
+       'corr_coeffs' = corr_coeffs,
        'sigma2_e' = sigma2_e,
        'sigma2_u' = sigma2_u,
        'sigma2_v' = sigma2_v)
+}
+#' @importFrom matrixcalc is.positive.definite
+#' @noRd
+sample_corr_coeffs_MH <- function(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                  sh_len, sh_h_mapper, cor_step_size){
+  Zbeta <- z_covs[,4:(3+7)] %*% corr_coeffs
+  loglik <- calc_loglik(which(sh_len!=1), sh_h_mapper,
+                        z_covs[,1], Zbeta, VH_all, sigma2_v)
+  # loglik <- 0
+  # for(sh_loc in which(sh_len!=1)){
+  #   h_loc <- which(sh_h_mapper == sh_loc)
+  #   z_loc <- which(z_covs[,1] == sh_loc)
+  #   rho <- Zbeta[z_loc]
+  #   vs <- VH_all[h_loc]
+  #   R <- diag(length(h_loc))
+  #   R[lower.tri(R)] <- rho
+  #   R <- R + t(R) - diag(diag(R))
+  #   Sigma_vs <- sigma2_v * R
+  #   loglik <- loglik + dmvnorm(vs, sigma = Sigma_vs, log = T)
+  # }
+  for(l in 1:length(corr_coeffs)){
+    # nonspd_flag <- FALSE
+    corr_coeffs_new <- corr_coeffs
+    corr_coeffs_new[l] <- corr_coeffs_new[l] + cor_step_size[l] * rnorm(1)
+    Zbeta_new <- z_covs[,4:(3+7)] %*% corr_coeffs_new
+    # loglik_new <- 0
+    # for(sh_loc in which(sh_len!=1)){
+    #   h_loc <- which(sh_h_mapper == sh_loc)
+    #   z_loc <- which(z_covs[,1] == sh_loc)
+    #   rho_new <- Zbeta_new[z_loc]
+    #   vs <- VH_all[h_loc]
+    #   R_new <- diag(length(h_loc))
+    #   R_new[lower.tri(R_new)] <- rho_new
+    #   R_new <- R_new + t(R_new) - diag(diag(R_new))
+    #   if(is.positive.definite(R_new)){
+    #     Sigma_vs_new <- sigma2_v * R_new
+    #     loglik_new <- loglik_new + dmvnorm(vs, sigma = Sigma_vs_new, log = T)
+    #   }
+    #   else
+    #     nonspd_flag <- TRUE
+    # }
+    loglik_new <- calc_loglik(which(sh_len!=1), sh_h_mapper,
+                              z_covs[,1], Zbeta_new, VH_all, sigma2_v)
+    if(loglik_new < 0){
+      ## accept probability
+      alpha <- min(1, exp(loglik_new - loglik))
+      if(runif(1) < alpha){
+        corr_coeffs <- corr_coeffs_new
+        loglik <- loglik_new
+      }
+    }
+  }
+  return(corr_coeffs)
 }
 #' @noRd
 my_seconds_to_period = function(x) {
