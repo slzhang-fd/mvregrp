@@ -29,20 +29,22 @@ sample_lv_grp <- function(VH_all, sigma2_e_inv, sigma2_v_inv,
   ## for n_s > 1 (superhousehold contains more than 1 house)
   ## loop each superhousehold loc
   ## currently set correlation matrix as identity
-  for(sh_loc in which(sh_len!=1)){
-    h_loc <- which(sh_h_mapper == sh_loc)
-    Sigma_s_inv <- diag(hit_len[h_loc] * sigma2_e_inv)
-    # Sigma_vs_inv <- sigma2_v_inv * diag(length(h_loc))
-    z_loc <- which(z_sh_ind == sh_loc)
-    rho <- Zbeta[z_loc]
-    R <- diag(length(h_loc))
-    R[lower.tri(R)] <- rho
-    R <- R + t(R) - diag(diag(R))
-    Sigma_vs_inv <- sigma2_v_inv * solve(R)
-    Sigma_vs_cond <- solve(Sigma_s_inv + Sigma_vs_inv)
-    mu_vs_cond <- Sigma_vs_cond %*% temp[h_loc,] * sigma2_e_inv
-    VH_all[h_loc,] <- mu_vs_cond + t(rmvnorm(n=1, sigma = Sigma_vs_cond))
-  }
+  # for(sh_loc in which(sh_len!=1)){
+  #   h_loc <- which(sh_h_mapper == sh_loc)
+  #   Sigma_s_inv <- diag(hit_len[h_loc] * sigma2_e_inv)
+  #   # Sigma_vs_inv <- sigma2_v_inv * diag(length(h_loc))
+  #   z_loc <- which(z_sh_ind == sh_loc)
+  #   rho <- Zbeta[z_loc]
+  #   R <- diag(length(h_loc))
+  #   R[lower.tri(R)] <- rho
+  #   R <- R + t(R) - diag(diag(R))
+  #   Sigma_vs_inv <- sigma2_v_inv * solve(R)
+  #   Sigma_vs_cond <- solve(Sigma_s_inv + Sigma_vs_inv)
+  #   mu_vs_cond <- Sigma_vs_cond %*% temp[h_loc,] * sigma2_e_inv
+  #   VH_all[h_loc,] <- mu_vs_cond + t(rmvnorm(n=1, sigma = Sigma_vs_cond))
+  # }
+  update_VH_multi(which(sh_len!=1), hit_len, sh_h_mapper, z_sh_ind, Zbeta, VH_all, 
+                  temp, sigma2_e_inv, sigma2_v_inv)
   VH_all
 }
 #' @noRd
@@ -95,6 +97,7 @@ sample_corr_coeffs_MH <- function(corr_coeffs, z_covs, sigma2_v, VH_all,
   #   Sigma_vs <- sigma2_v * R
   #   loglik <- loglik + dmvnorm(vs, sigma = Sigma_vs, log = T)
   # }
+  # cat("cpp_loglik:", loglik1, "R_loglik:", loglik)
   for(l in 1:length(corr_coeffs)){
     # nonspd_flag <- FALSE
     corr_coeffs_new <- corr_coeffs

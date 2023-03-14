@@ -19,7 +19,7 @@ arma::mat generateSymmetricMatrix(const arma::vec& offDiagonal, int n) {
 }
 //' @export
 // [[Rcpp::export]]
-double dmvnorm(arma::vec x, arma::mat Sigma){
+double my_dmvnorm(arma::vec x, arma::mat Sigma){
    int xdim = x.n_elem;
    arma::mat rooti = arma::trans(arma::inv(trimatu(arma::chol(Sigma))));
    double rootisum = arma::sum(log(rooti.diag()));
@@ -53,15 +53,16 @@ double calc_loglik(const arma::vec &sh_len_g1_indices,
     arma::mat Sigma_vs = sigma2_v * generateSymmetricMatrix(rho, h_loc.n_elem);
     if(!Sigma_vs.is_sympd())
       return 1;
-    loglik += dmvnorm(vs, Sigma_vs);
+    loglik += my_dmvnorm(vs, Sigma_vs);
   }
   return loglik;
 }
-
-arma::vec update_VH_multi(const arma::vec &sh_len_g1_indices, const arma::vec &hit_len,
+//' @export
+// [[Rcpp::export]]
+void update_VH_multi(const arma::vec &sh_len_g1_indices, const arma::vec &hit_len,
                           const arma::vec &sh_h_mapper, const arma::vec &z_sh_ind,
-                          const arma::vec &Zbeta, const arma::vec &VH_all, const arma::vec &temp,
-                          const double sigma2_e, const double sigma2_v){
+                          const arma::vec &Zbeta, arma::vec &VH_all, const arma::vec &temp,
+                          const double sigma2_e_inv, const double sigma2_v_inv){
 //   for(sh_loc in which(sh_len!=1)){
 //     h_loc <- which(sh_h_mapper == sh_loc)
 //     Sigma_s_inv <- diag(hit_len[h_loc] * sigma2_e_inv)
@@ -81,13 +82,13 @@ arma::vec update_VH_multi(const arma::vec &sh_len_g1_indices, const arma::vec &h
     arma::uvec z_loc = arma::find(z_sh_ind == sh_loc);
     arma::vec rho = Zbeta(z_loc);
     arma::vec vs = VH_all(h_loc);
-    arma::mat Sigma_s_inv = arma::diagmat(hit_len(h_loc)) / sigma2_e;
-    arma::mat Sigma_vs_inv = arma::inv_sympd(generateSymmetricMatrix(rho, h_loc.n_elem)) / sigma2_v;
+    arma::mat Sigma_s_inv = arma::diagmat(hit_len(h_loc)) * sigma2_e_inv;
+    arma::mat Sigma_vs_inv = arma::inv_sympd(generateSymmetricMatrix(rho, h_loc.n_elem)) * sigma2_v_inv;
     arma::mat Sigma_vs_cond = arma::inv_sympd(Sigma_s_inv + Sigma_vs_inv);
-    arma::vec mu_vs_cond = Sigma_vs_cond * temp(h_loc) / sigma2_e;
-    // VH_all(h_loc) = arma::mvnrnd(mu_vs_cond, Sigma_vs_cond).as_col();
+    arma::vec mu_vs_cond = Sigma_vs_cond * temp(h_loc) * sigma2_e_inv;
+    VH_all(h_loc) = arma::mvnrnd(mu_vs_cond, Sigma_vs_cond).as_col();
   }
-  return VH_all;
+  // return VH_all;
 }
 
 

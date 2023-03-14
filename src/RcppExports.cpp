@@ -23,40 +23,58 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// dmvnorm
-double dmvnorm(arma::vec x, arma::mat Sigma);
-RcppExport SEXP _mvregrp_dmvnorm(SEXP xSEXP, SEXP SigmaSEXP) {
+// my_dmvnorm
+double my_dmvnorm(arma::vec x, arma::mat Sigma);
+RcppExport SEXP _mvregrp_my_dmvnorm(SEXP xSEXP, SEXP SigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type Sigma(SigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(dmvnorm(x, Sigma));
+    rcpp_result_gen = Rcpp::wrap(my_dmvnorm(x, Sigma));
     return rcpp_result_gen;
 END_RCPP
 }
 // calc_loglik
-double calc_loglik(const arma::vec& sh_len_g1_indices, const arma::vec& sh_h_mapper, const arma::mat& z_covs, const arma::vec& z_sh_ind, const arma::vec& Zbeta, const arma::vec& VH_all, const double sigma2_v);
-RcppExport SEXP _mvregrp_calc_loglik(SEXP sh_len_g1_indicesSEXP, SEXP sh_h_mapperSEXP, SEXP z_covsSEXP, SEXP z_sh_indSEXP, SEXP ZbetaSEXP, SEXP VH_allSEXP, SEXP sigma2_vSEXP) {
+double calc_loglik(const arma::vec& sh_len_g1_indices, const arma::vec& sh_h_mapper, const arma::vec& z_sh_ind, const arma::vec& Zbeta, const arma::vec& VH_all, const double sigma2_v);
+RcppExport SEXP _mvregrp_calc_loglik(SEXP sh_len_g1_indicesSEXP, SEXP sh_h_mapperSEXP, SEXP z_sh_indSEXP, SEXP ZbetaSEXP, SEXP VH_allSEXP, SEXP sigma2_vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type sh_len_g1_indices(sh_len_g1_indicesSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sh_h_mapper(sh_h_mapperSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type z_covs(z_covsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type z_sh_ind(z_sh_indSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type Zbeta(ZbetaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type VH_all(VH_allSEXP);
     Rcpp::traits::input_parameter< const double >::type sigma2_v(sigma2_vSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_loglik(sh_len_g1_indices, sh_h_mapper, z_covs, z_sh_ind, Zbeta, VH_all, sigma2_v));
+    rcpp_result_gen = Rcpp::wrap(calc_loglik(sh_len_g1_indices, sh_h_mapper, z_sh_ind, Zbeta, VH_all, sigma2_v));
     return rcpp_result_gen;
+END_RCPP
+}
+// update_VH_multi
+void update_VH_multi(const arma::vec& sh_len_g1_indices, const arma::vec& hit_len, const arma::vec& sh_h_mapper, const arma::vec& z_sh_ind, const arma::vec& Zbeta, arma::vec& VH_all, const arma::vec& temp, const double sigma2_e_inv, const double sigma2_v_inv);
+RcppExport SEXP _mvregrp_update_VH_multi(SEXP sh_len_g1_indicesSEXP, SEXP hit_lenSEXP, SEXP sh_h_mapperSEXP, SEXP z_sh_indSEXP, SEXP ZbetaSEXP, SEXP VH_allSEXP, SEXP tempSEXP, SEXP sigma2_e_invSEXP, SEXP sigma2_v_invSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type sh_len_g1_indices(sh_len_g1_indicesSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type hit_len(hit_lenSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sh_h_mapper(sh_h_mapperSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z_sh_ind(z_sh_indSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type Zbeta(ZbetaSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type VH_all(VH_allSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type temp(tempSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma2_e_inv(sigma2_e_invSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma2_v_inv(sigma2_v_invSEXP);
+    update_VH_multi(sh_len_g1_indices, hit_len, sh_h_mapper, z_sh_ind, Zbeta, VH_all, temp, sigma2_e_inv, sigma2_v_inv);
+    return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mvregrp_generateSymmetricMatrix", (DL_FUNC) &_mvregrp_generateSymmetricMatrix, 2},
-    {"_mvregrp_dmvnorm", (DL_FUNC) &_mvregrp_dmvnorm, 2},
-    {"_mvregrp_calc_loglik", (DL_FUNC) &_mvregrp_calc_loglik, 7},
+    {"_mvregrp_my_dmvnorm", (DL_FUNC) &_mvregrp_my_dmvnorm, 2},
+    {"_mvregrp_calc_loglik", (DL_FUNC) &_mvregrp_calc_loglik, 6},
+    {"_mvregrp_update_VH_multi", (DL_FUNC) &_mvregrp_update_VH_multi, 9},
     {NULL, NULL, 0}
 };
 

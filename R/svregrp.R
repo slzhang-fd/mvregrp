@@ -47,7 +47,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   extra <- 6
   width <- 30
   time <- remainining <- 0
-  rejection_rate <- rep(0, 8)
+  rejection_rate <- rep(0, 7)
   for(iter in 1:max_steps){
     init[iter] <- Sys.time()
     step <- round(iter / max_steps * (width - extra))
@@ -98,7 +98,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     remainining <- round(est, 0)
     cat(if (iter == max_steps) '\n' else '\r')
     if(iter %% 100 == 0)
-      rejection_rate = mean(diff(corr_coeffs_all[(iter-99):iter,])==0)
+      rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
     
   }
   return(list('mean_coeffs_all'=mean_coeffs_all,

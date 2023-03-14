@@ -11,12 +11,17 @@ generateSymmetricMatrix <- function(offDiagonal, n) {
 }
 
 #' @export
-dmvnorm <- function(x, Sigma) {
-    .Call('_mvregrp_dmvnorm', PACKAGE = 'mvregrp', x, Sigma)
+my_dmvnorm <- function(x, Sigma) {
+    .Call('_mvregrp_my_dmvnorm', PACKAGE = 'mvregrp', x, Sigma)
 }
 
 #' @export
-calc_loglik <- function(sh_len_g1_indices, sh_h_mapper, z_covs, z_sh_ind, Zbeta, VH_all, sigma2_v) {
-    .Call('_mvregrp_calc_loglik', PACKAGE = 'mvregrp', sh_len_g1_indices, sh_h_mapper, z_covs, z_sh_ind, Zbeta, VH_all, sigma2_v)
+calc_loglik <- function(sh_len_g1_indices, sh_h_mapper, z_sh_ind, Zbeta, VH_all, sigma2_v) {
+    .Call('_mvregrp_calc_loglik', PACKAGE = 'mvregrp', sh_len_g1_indices, sh_h_mapper, z_sh_ind, Zbeta, VH_all, sigma2_v)
+}
+
+#' @export
+update_VH_multi <- function(sh_len_g1_indices, hit_len, sh_h_mapper, z_sh_ind, Zbeta, VH_all, temp, sigma2_e_inv, sigma2_v_inv) {
+    invisible(.Call('_mvregrp_update_VH_multi', PACKAGE = 'mvregrp', sh_len_g1_indices, hit_len, sh_h_mapper, z_sh_ind, Zbeta, VH_all, temp, sigma2_e_inv, sigma2_v_inv))
 }
 
