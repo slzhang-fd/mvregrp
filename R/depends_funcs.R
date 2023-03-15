@@ -168,3 +168,16 @@ sample_sigma2 <- function(X){
   S <- sum(t(X) %*% X)
   return( rinvgamma(n=1, alpha + 0.5 * N, beta + 0.5 * S) )
 }
+#' @export
+res_compare_plot <- function(refit_res, true_val, burn_in) {
+  refit_res <- refit_res[(burn_in + 1):nrow(refit_res), ]
+  yl <- apply(refit_res, 2, quantile, 0.025)
+  yu <- apply(refit_res, 2, quantile, 0.975)
+  ## to remove warnings of arrows commmand
+  yu <- pmax(yl+mean(abs(yl))*0.002, yu)
+  x <- seq_len(ncol(refit_res))
+  plot(x, true_val, ylim = range(c(yl, yu)), pch = 19, cex = .3, xaxt = "n",
+       xlab="parameters", ylab = "95% credible interval and true value")
+  axis(1, at = x)
+  arrows(x, yl, x, yu, angle = 90, code = 3, length = .04)
+}
