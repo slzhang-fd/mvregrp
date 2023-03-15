@@ -82,8 +82,8 @@ void update_VH_multi(const arma::vec &sh_len_g1_indices, const arma::vec &hit_le
     arma::uvec z_loc = arma::find(z_sh_ind == sh_loc);
     arma::vec rho = Zbeta(z_loc);
     arma::vec vs = VH_all(h_loc);
-    arma::mat Sigma_s_inv = arma::diagmat(hit_len(h_loc)) * sigma2_e_inv;
-    arma::mat Sigma_vs_inv = arma::inv_sympd(generateSymmetricMatrix(rho, h_loc.n_elem)) * sigma2_v_inv;
+    arma::mat Sigma_s_inv = sigma2_e_inv * arma::diagmat(hit_len(h_loc));
+    arma::mat Sigma_vs_inv = sigma2_v_inv * arma::inv_sympd(generateSymmetricMatrix(rho, h_loc.n_elem));
     arma::mat Sigma_vs_cond = arma::inv_sympd(Sigma_s_inv + Sigma_vs_inv);
     arma::vec mu_vs_cond = Sigma_vs_cond * temp(h_loc) * sigma2_e_inv;
     VH_all(h_loc) = arma::mvnrnd(mu_vs_cond, Sigma_vs_cond).as_col();
