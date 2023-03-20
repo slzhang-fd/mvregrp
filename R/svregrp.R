@@ -1,7 +1,25 @@
+#' Gibbs sampling of the grouped household effect model
+#'
+#' This function takes response, multilevel indices as input and
+#' returns MCMC sample chains of model parameters and latent variables.
+#'
+#' @param Y_star A NN * 1 matrix containing continuous responses.
+#' @param x_covs A NN * p matrix containing covariates for the mean model.
+#' @param z_covs A NN * q matrix containing covariates for the correlation model.
+#' @param i_ind A vector containing indices for individual.
+#' @param sh_ind A vector containing indices for super-household.
+#' @param hit_ind A vector containing indices for unique household.
+#' @param max_steps Length of MCMC chains to be drawn.
+#' @param cor_step_size A vector length q specifying step sizes for q coefficients 
+#'        of correlation model.
+#' @param corr_vs_diag Whether set the grouped household effects to be independent,
+#'        default value is FALSE.
+#' @return A dataframe with columns of MCMC chains of sampled parameters and latent variables.
 #' @export
 svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                           i_ind, sh_ind, hit_ind, 
-                          max_steps, cor_step_size){
+                          max_steps, cor_step_size,
+                          corr_vs_diag = FALSE){
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -77,7 +95,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                                mean_coeffs, corr_coeffs,
                                sigma2_e, sigma2_u, sigma2_v, 
                                i_ind, hit_ind, sh_len, sh_h_mapper,
-                               cor_step_size)
+                               cor_step_size, corr_vs_diag)
     mean_coeffs <- params$mean_coeffs
     corr_coeffs <- params$corr_coeffs
     sigma2_u <- params$sigma2_u
@@ -97,9 +115,10 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     est <- max_steps * (mean(end[end != 0] - init[init != 0])) - time
     remainining <- round(est, 0)
     cat(if (iter == max_steps) '\n' else '\r')
-    if(iter %% 100 == 0)
-      rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
-    
+    if(!corr_vs_diag){
+      if(iter %% 100 == 0)
+        rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
+    }
   }
   return(list('mean_coeffs_all'=mean_coeffs_all,
               'corr_coeffs_all'=corr_coeffs_all,

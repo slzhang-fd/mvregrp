@@ -52,7 +52,7 @@ sample_params_he <- function(x_covs, z_covs, XtX, Y_star, U_all, VH_all,
                              mean_coeffs, corr_coeffs,
                              sigma2_e, sigma2_u, sigma2_v,
                              i_ind, hit_ind, sh_len, sh_h_mapper,
-                             cor_step_size){
+                             cor_step_size, corr_vs_diag){
   ## sample coeffs, sigma2_e, sigma2_u, sigma2_v
   p <- nrow(mean_coeffs)
   ## sample coeffs
@@ -69,8 +69,10 @@ sample_params_he <- function(x_covs, z_covs, XtX, Y_star, U_all, VH_all,
   sigma2_v <- sample_sigma2(VH_all)
   
   ## sample R_coeffs (R_vs)
-  corr_coeffs <- sample_corr_coeffs_MH(corr_coeffs, z_covs, sigma2_v, VH_all,
-                                       sh_len, sh_h_mapper, cor_step_size)
+  if(!corr_vs_diag){
+    corr_coeffs <- sample_corr_coeffs_MH(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                         sh_len, sh_h_mapper, cor_step_size)
+  }
   
   list('mean_coeffs' = mean_coeffs,
        'corr_coeffs' = corr_coeffs,
