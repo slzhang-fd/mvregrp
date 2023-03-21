@@ -11,6 +11,7 @@ Authors@R: c(
 Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
 Description: Efficient Gibbs sampling procedures for multivariate grouped random 
              effect probit model estimation.
+Depends: coda, parallel
 Imports: 
       truncnorm,
       mvtnorm,
