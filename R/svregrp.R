@@ -64,7 +64,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   extra <- 6
   width <- 30
   time <- remainining <- 0
-  rejection_rate <- rep(0, 7)
+  rejection_rate <- rep(0, corr_cov_num)
   for(iter in 1:max_steps){
     init[iter] <- Sys.time()
     step <- round(iter / max_steps * (width - extra))
@@ -78,7 +78,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     sigma2_v_inv <- 1.0 / sigma2_v
     
     Xbeta <- x_covs %*% mean_coeffs
-    Zbeta <- z_covs[,4:(3+corr_cov_num)] %*% corr_coeffs
+    Zbeta <- z_covs[,-(1:3),drop=FALSE] %*% corr_coeffs
     ## stochastic E step
     # sample U
     U_all <- sample_lv_ge(U_all, sigma2_e_inv, sigma2_u_inv, u_len,
@@ -116,7 +116,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     cat(if (iter == max_steps) '\n' else '\r')
     if(!corr_vs_diag){
       if(iter %% 100 == 0)
-        rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
+        rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)
     }
   }
   df_mcmc <- data.frame("mean_coeffs"=mean_coeffs_all,
@@ -199,7 +199,7 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
   extra <- 6
   width <- 30
   time <- remainining <- 0
-  rejection_rate <- rep(0, 7)
+  rejection_rate <- rep(0, corr_cov_num)
   for(iter in 1:max_steps){
     init[iter] <- Sys.time()
     step <- round(iter / max_steps * (width - extra))
@@ -254,8 +254,8 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
         rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
     }
   }
-  mean_coeffs_all_old <- as.matrix(svregrp_res$params_mcmc_obj[,grep("mean_coeffs",varnames(svregrp_res$params_mcmc_obj))])
-  corr_coeffs_all_old <- as.matrix(svregrp_res$params_mcmc_obj[,grep("corr_coeffs",varnames(svregrp_res$params_mcmc_obj))])
+  mean_coeffs_all_old <- as.matrix(svregrp_res$params_mcmc_obj[,grep("mean_coeffs",varnames(svregrp_res$params_mcmc_obj)),drop=FALSE])
+  corr_coeffs_all_old <- as.matrix(svregrp_res$params_mcmc_obj[,grep("corr_coeffs",varnames(svregrp_res$params_mcmc_obj)),drop=FALSE])
   sigma2_e_all_old <- c(svregrp_res$params_mcmc_obj[,grep("sigma2_e",varnames(svregrp_res$params_mcmc_obj))])
   sigma2_u_all_old <- c(svregrp_res$params_mcmc_obj[,grep("sigma2_u",varnames(svregrp_res$params_mcmc_obj))])
   sigma2_v_all_old <- c(svregrp_res$params_mcmc_obj[,grep("sigma2_v",varnames(svregrp_res$params_mcmc_obj))])
@@ -334,7 +334,7 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
     extra <- 6
     width <- 30
     time <- remainining <- 0
-    rejection_rate <- rep(0, 7)
+    rejection_rate <- rep(0, corr_cov_num)
     for(iter in 1:max_steps){
       if(seed == 1){
         init[iter] <- Sys.time()
