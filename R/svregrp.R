@@ -251,7 +251,7 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
     cat(if (iter == max_steps) '\n' else '\r')
     if(!corr_vs_diag){
       if(iter %% 100 == 0)
-        rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
+        rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)
     }
   }
   mean_coeffs_all_old <- as.matrix(svregrp_res$params_mcmc_obj[,grep("mean_coeffs",varnames(svregrp_res$params_mcmc_obj)),drop=FALSE])
@@ -287,7 +287,8 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
                           i_ind, sh_ind, hit_ind, 
                           max_steps, cor_step_size,
                           corr_vs_diag = FALSE,
-                          num_chains = 1){
+                          num_chains = 1,
+                          output_progress_file="output_chain_1.txt"){
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -389,7 +390,7 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
         cat(if (iter == max_steps) '\n' else '\r')
         if(!corr_vs_diag){
           if(iter %% 100 == 0)
-            rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,])==0)
+            rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)
         }
       }
     }
@@ -405,7 +406,7 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
   # num_cores <- detectCores()
   # cl <- makeCluster(min(num_chains,num_cores-1))
   # registerDoParallel(cl)
-  sink("output_chain_1.txt")
+  sink(output_progress_file)
   seeds <- 1:num_chains
   chains <- mclapply(seeds, function(seed) generate_chain(seed), 
                      mc.cores = min(num_chains,detectCores()-1))
