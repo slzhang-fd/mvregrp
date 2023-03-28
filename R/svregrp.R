@@ -55,6 +55,8 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   
   mean_coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
   corr_coeffs_all <- matrix(0, max_steps, corr_cov_num*K)
+  colnames(mean_coeffs_all) = colnames(x_covs)
+  colnames(corr_coeffs_all) = colnames(z_covs)[-(1:3)]
   sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
   XtX <- t(x_covs)%*%x_covs
   
@@ -190,6 +192,8 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
 
   mean_coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
   corr_coeffs_all <- matrix(0, max_steps, corr_cov_num*K)
+  colnames(mean_coeffs_all) = colnames(x_covs)
+  colnames(corr_coeffs_all) = colnames(z_covs)[-(1:3)]
   sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
   XtX <- t(x_covs)%*%x_covs
 
@@ -280,7 +284,7 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
               'state_preserve'=state_preserve))
 }
 
-#' @importFrom parallel mclapply
+#' @importFrom parallel mclapply detectCores
 #' @importFrom coda as.mcmc mcmc.list
 #' @export
 svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
@@ -288,7 +292,12 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
                           max_steps, cor_step_size,
                           corr_vs_diag = FALSE,
                           num_chains = 1,
-                          output_progress_file="output_chain_1.txt"){
+                          output_progress_file = "output_chain_1.txt",
+                          init_mean_coeffs = NULL,
+                          init_corr_coeffs = NULL,
+                          init_sigma2_e = NULL,
+                          init_sigma2_u = NULL,
+                          init_sigma2_v = NULL) {
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -321,12 +330,30 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
     ## initialize parameters
     mean_coeffs <- matrix(0, mean_cov_num, K)
     corr_coeffs <- matrix(0, corr_cov_num, K)
-    # corr_coeffs <- matrix(c(0.1, 0.01, 0.1, 0.1, 0.1, -0.01, 0.02), ncol = 1)
     sigma2_e <- sigma2_v <- sigma2_u <- 1
+    if (!is.null(init_mean_coeffs))
+      mean_coeffs <- init_mean_coeffs[[seed]]
+    if (!is.null(init_corr_coeffs))
+      corr_coeffs <- init_corr_coeffs[[seed]]
+    if (!is.null(init_sigma2_e))
+      sigma2_e <- init_sigma2_e[seed]
+    if (!is.null(init_sigma2_u))
+      sigma2_u <- init_sigma2_u[seed]
+    if (!is.null(init_sigma2_v))
+      sigma2_v <- init_sigma2_v[seed]
     
-    mean_coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
-    corr_coeffs_all <- matrix(0, max_steps, corr_cov_num*K)
-    sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
+    
+    mean_coeffs_all <- matrix(0, max_steps+1, mean_cov_num*K)
+    colnames(mean_coeffs_all) = colnames(x_covs)
+    corr_coeffs_all <- matrix(0, max_steps+1, corr_cov_num*K)
+    colnames(corr_coeffs_all) = colnames(z_covs)[-(1:3)]
+    sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps+1)
+    # store initial values
+    mean_coeffs_all[1,] <- c(mean_coeffs)
+    corr_coeffs_all[1,] <- c(corr_coeffs)
+    sigma2_e_all[1] <- sigma2_e
+    sigma2_u_all[1] <- sigma2_u
+    sigma2_v_all[1] <- sigma2_v
     XtX <- t(x_covs)%*%x_covs
     
     ## for plotting progress bar
@@ -375,11 +402,11 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
       sigma2_e <- params$sigma2_e
       
       # store results
-      mean_coeffs_all[iter,] <- c(mean_coeffs)
-      corr_coeffs_all[iter,] <- c(corr_coeffs)
-      sigma2_e_all[iter] <- sigma2_e
-      sigma2_u_all[iter] <- sigma2_u
-      sigma2_v_all[iter] <- sigma2_v
+      mean_coeffs_all[iter+1,] <- c(mean_coeffs)
+      corr_coeffs_all[iter+1,] <- c(corr_coeffs)
+      sigma2_e_all[iter+1] <- sigma2_e
+      sigma2_u_all[iter+1] <- sigma2_u
+      sigma2_v_all[iter+1] <- sigma2_v
       
       ## progress bar
       if(seed == 1){
@@ -394,8 +421,8 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
         }
       }
     }
-    df_mcmc <- data.frame("mean_coeffs"=mean_coeffs_all,
-                          "corr_coeffs"=corr_coeffs_all,
+    df_mcmc <- data.frame("mean_coeffs" = mean_coeffs_all,
+                          "corr_coeffs" = corr_coeffs_all,
                           "sigma2_e" = sigma2_e_all,
                           "sigma2_u" = sigma2_u_all,
                           "sigma2_v" = sigma2_v_all)
@@ -403,12 +430,10 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
     mcmc_object <- as.mcmc(ts(df_mcmc))
     return(mcmc_object)
   }
-  # num_cores <- detectCores()
-  # cl <- makeCluster(min(num_chains,num_cores-1))
-  # registerDoParallel(cl)
   sink(output_progress_file)
   seeds <- 1:num_chains
-  chains <- mclapply(seeds, function(seed) generate_chain(seed), 
-                     mc.cores = min(num_chains,detectCores()-1))
+  chains <- mclapply(seeds, generate_chain,
+                     mc.cores = min(num_chains, detectCores() - 1))
+  sink()
   return(mcmc.list(chains))
 }
