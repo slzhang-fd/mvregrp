@@ -19,7 +19,8 @@
 svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                           i_ind, sh_ind, hit_ind, 
                           max_steps, cor_step_size,
-                          corr_vs_diag = FALSE){
+                          corr_vs_diag = FALSE,
+                          verbose = TRUE){
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -74,7 +75,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                     strrep('=', step), strrep(' ', width - step - extra),
                     round(iter / max_steps * 100), my_seconds_to_period(time),
                     my_seconds_to_period(remainining), paste(round(rejection_rate,3), collapse=","))
-    cat(text)
+    if(verbose) cat(text)
     sigma2_e_inv <- 1.0 / sigma2_e
     sigma2_u_inv <- 1.0 / sigma2_u
     sigma2_v_inv <- 1.0 / sigma2_v
@@ -115,7 +116,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     time <- round(sum(end - init), 0)
     est <- max_steps * (mean(end[end != 0] - init[init != 0])) - time
     remainining <- round(est, 0)
-    cat(if (iter == max_steps) '\n' else '\r')
+    if(verbose) cat(if (iter == max_steps) '\n' else '\r')
     if(!corr_vs_diag){
       if(iter %% 100 == 0)
         rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)
@@ -143,7 +144,8 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
 }
 
 #' @export
-extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
+extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size,
+                                    verbose = TRUE){
   ## unpack arguments:
   # Y_star, x_covs, z_covs,
   # i_ind, sh_ind, hit_ind, 
@@ -211,7 +213,7 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
                     strrep('=', step), strrep(' ', width - step - extra),
                     round(iter / max_steps * 100), my_seconds_to_period(time),
                     my_seconds_to_period(remainining), paste(round(rejection_rate,3), collapse=","))
-    cat(text)
+    if(verbose) cat(text)
     sigma2_e_inv <- 1.0 / sigma2_e
     sigma2_u_inv <- 1.0 / sigma2_u
     sigma2_v_inv <- 1.0 / sigma2_v
@@ -252,7 +254,7 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size){
     time <- round(sum(end - init), 0)
     est <- max_steps * (mean(end[end != 0] - init[init != 0])) - time
     remainining <- round(est, 0)
-    cat(if (iter == max_steps) '\n' else '\r')
+    if(verbose) cat(if (iter == max_steps) '\n' else '\r')
     if(!corr_vs_diag){
       if(iter %% 100 == 0)
         rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)

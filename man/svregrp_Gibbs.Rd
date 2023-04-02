@@ -13,7 +13,8 @@ svregrp_Gibbs(
   hit_ind,
   max_steps,
   cor_step_size,
-  corr_vs_diag = FALSE
+  corr_vs_diag = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
