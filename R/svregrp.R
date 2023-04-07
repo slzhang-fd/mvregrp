@@ -377,11 +377,12 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
       if(seed == 1){
         init[iter] <- Sys.time()
         step <- round(iter / max_steps * (width - extra))
-        text <- sprintf('\r|%s%s|% 3s%% | Execution time:%s | Estimated time remaining:%s | rejection rate:%s       ',
+        text <- sprintf('\r|%s%s|% 3s%% | Execution time:%s | Estimated time remaining:%s | rejection rate:%s       \n',
                         strrep('=', step), strrep(' ', width - step - extra),
                         round(iter / max_steps * 100), my_seconds_to_period(time),
                         my_seconds_to_period(remainining), paste(round(rejection_rate,3), collapse=","))
-        cat(text)
+        if(!(iter%%100))
+          cat(text)
       }
       sigma2_e_inv <- 1.0 / sigma2_e
       sigma2_u_inv <- 1.0 / sigma2_u
@@ -424,7 +425,7 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
         time <- round(sum(end - init), 0)
         est <- max_steps * (mean(end[end != 0] - init[init != 0])) - time
         remainining <- round(est, 0)
-        cat(if (iter == max_steps) '\n' else '\r')
+        # cat(if (iter == max_steps) '\n' else '\r')
         if(!corr_vs_diag){
           if(iter %% 100 == 0)
             rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)
