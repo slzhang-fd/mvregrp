@@ -20,7 +20,12 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                           i_ind, sh_ind, hit_ind, 
                           max_steps, cor_step_size,
                           corr_vs_diag = FALSE,
-                          verbose = TRUE){
+                          verbose = TRUE,
+                          init_mean_coeffs = NULL,
+                          init_corr_coeffs = NULL,
+                          init_sigma2_e = NULL,
+                          init_sigma2_u = NULL,
+                          init_sigma2_v = NULL){
   K <- ncol(Y_star)
   ## record number
   rcd_num <- nrow(Y_star)
@@ -53,6 +58,16 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   corr_coeffs <- matrix(0, corr_cov_num, K)
   # corr_coeffs <- matrix(c(0.1, 0.01, 0.1, 0.1, 0.1, -0.01, 0.02), ncol = 1)
   sigma2_e <- sigma2_v <- sigma2_u <- 1
+  if (!is.null(init_mean_coeffs))
+    mean_coeffs <- init_mean_coeffs
+  if (!is.null(init_corr_coeffs))
+    corr_coeffs <- init_corr_coeffs
+  if (!is.null(init_sigma2_e))
+    sigma2_e <- init_sigma2_e
+  if (!is.null(init_sigma2_u))
+    sigma2_u <- init_sigma2_u
+  if (!is.null(init_sigma2_v))
+    sigma2_v <- init_sigma2_v
   
   mean_coeffs_all <- matrix(0, max_steps, mean_cov_num*K)
   corr_coeffs_all <- matrix(0, max_steps, corr_cov_num*K)
@@ -67,7 +82,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   extra <- 6
   width <- 30
   time <- remainining <- 0
-  rejection_rate <- rep(0, corr_cov_num)
+  rejection_rate <- rep(0, corr_cov_num+1)
   for(iter in 1:max_steps){
     init[iter] <- Sys.time()
     step <- round(iter / max_steps * (width - extra))
@@ -124,7 +139,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
       cat(if (iter == max_steps) '\n' else '\r')
     if(!corr_vs_diag){
       if(iter %% 100 == 0)
-        rejection_rate = colMeans(diff(corr_coeffs_all[(iter-99):iter,,drop=FALSE])==0)
+        rejection_rate = colMeans(diff(cbind(corr_coeffs_all,sigma2_v_all)[(iter-99):iter,,drop=FALSE])==0)
     }
   }
   df_mcmc <- data.frame("mean_coeffs"=mean_coeffs_all,

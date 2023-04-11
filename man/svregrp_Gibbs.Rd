@@ -14,7 +14,12 @@ svregrp_Gibbs(
   max_steps,
   cor_step_size,
   corr_vs_diag = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  init_mean_coeffs = NULL,
+  init_corr_coeffs = NULL,
+  init_sigma2_e = NULL,
+  init_sigma2_u = NULL,
+  init_sigma2_v = NULL
 )
 }
 \arguments{

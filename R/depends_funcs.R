@@ -66,7 +66,9 @@ sample_params_he <- function(x_covs, z_covs, XtX, Y_star, U_all, VH_all,
   sigma2_u <- sample_sigma2(U_all)
 
   ## sample sigma2_v
-  sigma2_v <- sample_sigma2(VH_all)
+  # sigma2_v <- sample_sigma2(VH_all)
+  sigma2_v <- sample_sigma2_v_MH(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                 sh_len, sh_h_mapper, cor_step_size)
   
   ## sample R_coeffs (R_vs)
   if(!corr_vs_diag){
@@ -133,6 +135,33 @@ sample_corr_coeffs_MH <- function(corr_coeffs, z_covs, sigma2_v, VH_all,
     }
   }
   return(corr_coeffs)
+}
+#' @noRd
+sample_sigma2_v_MH <- function(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                  sh_len, sh_h_mapper, cor_step_size){
+  Zbeta <- z_covs[,-(1:3), drop=FALSE] %*% corr_coeffs
+  sh_singles_loc <- which(sh_len==1)
+  sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
+  loglik <- calc_loglik(which(sh_len!=1), sh_h_mapper,
+                        z_covs[,1], Zbeta, VH_all, sigma2_v) + 
+            sum(dnorm(VH_all[sh_single_h_loc], mean=0, sd=sqrt(sigma2_v), log = T))
+  
+  corr_cov_num <- length(corr_coeffs)
+  sigma2_v_new <- sigma2_v
+  sigma2_v_new <- sigma2_v_new + cor_step_size[corr_cov_num+1] * rnorm(1)
+  if(sigma2_v_new < 0) return(sigma2_v)
+  loglik_new <- calc_loglik(which(sh_len!=1), sh_h_mapper,
+                            z_covs[,1], Zbeta, VH_all, sigma2_v_new) +
+                sum(dnorm(VH_all[sh_single_h_loc], mean=0, sd=sqrt(sigma2_v_new), log = T))
+  if(loglik_new < 0){
+    ## accept probability
+    alpha <- min(1, exp(loglik_new - loglik))
+    if(runif(1) < alpha){
+      sigma2_v <- sigma2_v_new
+      loglik <- loglik_new
+    }
+  }
+  return(sigma2_v)
 }
 #' @noRd
 my_seconds_to_period = function(x) {
