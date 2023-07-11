@@ -12,6 +12,41 @@ sample_lv_ge <- function(X_all, sigma2_e_inv, sigma2_x_inv, x_len, temp){
   }
   X_all
 }
+#' @noRd
+calcu_Deviance <- function(Y_star, x_covs, z_covs, i_ind, hit_ind, sh_len,
+                           mean_coeffs, corr_coeffs, 
+                           sigma2_u, sigma2_v, sigma2_e,
+                           U_all, VH_all){
+  loglik <- sum(dnorm(Y_star, mean=x_covs%*% mean_coeffs+U_all[i_ind,]+VH_all[hit_ind,],
+                      sd=sqrt(sigma2_e)), log=T)
+  loglik <- loglik + sum(dnorm(U_all, mean=0, sd=sqrt(sigma2_u), log=T))
+  
+  Zbeta <- z_covs[,-(1:3), drop=FALSE] %*% corr_coeffs
+  sh_singles_loc <- which(sh_len==1)
+  sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
+  loglik <- loglik + calc_loglik(which(sh_len!=1), sh_h_mapper,
+                                 z_covs[,1], Zbeta, VH_all, sigma2_v) + 
+    sum(dnorm(VH_all[sh_single_h_loc], mean=0, sd=sqrt(sigma2_v), log = T))
+  return(-2*loglik)
+}
+#' @noRd
+calcu_Deviance_area <- function(Y_star, x_covs, z_covs, i_ind, area_ind, hit_ind, sh_len,
+                           mean_coeffs, corr_coeffs, 
+                           sigma2_u, sigma2_w, sigma2_v, sigma2_e,
+                           U_all, W_all, VH_all){
+  loglik <- sum(dnorm(Y_star, mean=x_covs%*% mean_coeffs+U_all[i_ind,]+VH_all[hit_ind,]+W_all[area_ind,],
+                      sd=sqrt(sigma2_e)), log=T)
+  loglik <- loglik + sum(dnorm(U_all, mean=0, sd=sqrt(sigma2_u), log=T))
+  loglik <- loglik + sum(dnorm(W_all, mean=0, sd=sqrt(sigma2_w), log=T))
+  
+  Zbeta <- z_covs[,-(1:3), drop=FALSE] %*% corr_coeffs
+  sh_singles_loc <- which(sh_len==1)
+  sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
+  loglik <- loglik + calc_loglik(which(sh_len!=1), sh_h_mapper,
+                                 z_covs[,1], Zbeta, VH_all, sigma2_v) + 
+    sum(dnorm(VH_all[sh_single_h_loc], mean=0, sd=sqrt(sigma2_v), log = T))
+  return(-2*loglik)
+}
 sample_lv_grp <- function(VH_all, sigma2_e_inv, sigma2_v_inv,
                           sh_len, sh_h_mapper, hit_len, Zbeta,
                           z_sh_ind, temp){
@@ -81,6 +116,45 @@ sample_params_he <- function(x_covs, z_covs, XtX, Y_star, U_all, VH_all,
        'sigma2_e' = sigma2_e,
        'sigma2_u' = sigma2_u,
        'sigma2_v' = sigma2_v)
+}
+#' @noRd
+sample_params_he_area <- function(x_covs, z_covs, XtX, Y_star, U_all, VH_all, W_all,
+                             mean_coeffs, corr_coeffs,
+                             sigma2_e, sigma2_u, sigma2_v,
+                             i_ind, area_ind, hit_ind, sh_len, sh_h_mapper,
+                             cor_step_size, corr_vs_diag){
+  ## sample coeffs, sigma2_e, sigma2_u, sigma2_v
+  p <- nrow(mean_coeffs)
+  ## sample coeffs
+  mean_coeffs <- sample_coeffs(x_covs, XtX, Y_star - U_all[i_ind,] - VH_all[hit_ind,] - W_all[area_ind,],
+                               matrix(1.0 / sigma2_e))
+  
+  ## sample sigma2_e
+  sigma2_e <- sample_sigma2(Y_star - x_covs%*% mean_coeffs - U_all[i_ind,] - VH_all[hit_ind,] - W_all[area_ind,])
+  
+  ## sample sigma2_u
+  sigma2_u <- sample_sigma2(U_all)
+  
+  ## sample sigma2_w
+  sigma2_w <- sample_sigma2(W_all)
+  
+  ## sample sigma2_v
+  # sigma2_v <- sample_sigma2(VH_all)
+  sigma2_v <- sample_sigma2_v_MH(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                 sh_len, sh_h_mapper, cor_step_size)
+  
+  ## sample R_coeffs (R_vs)
+  if(!corr_vs_diag){
+    corr_coeffs <- sample_corr_coeffs_MH(corr_coeffs, z_covs, sigma2_v, VH_all,
+                                         sh_len, sh_h_mapper, cor_step_size)
+  }
+  
+  list('mean_coeffs' = mean_coeffs,
+       'corr_coeffs' = corr_coeffs,
+       'sigma2_e' = sigma2_e,
+       'sigma2_u' = sigma2_u,
+       'sigma2_v' = sigma2_v,
+       'sigma2_w' = sigma2_w)
 }
 #' @importFrom matrixcalc is.positive.definite
 #' @noRd
