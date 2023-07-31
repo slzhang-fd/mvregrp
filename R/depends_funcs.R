@@ -13,46 +13,46 @@ sample_lv_ge <- function(X_all, sigma2_e_inv, sigma2_x_inv, x_len, temp) {
   X_all
 }
 #' @noRd
-calcu_Deviance <- function(Y_star, x_covs, z_covs, i_ind, hit_ind, sh_len,
+calcu_Deviance <- function(Y_star, x_covs, z_covs, i_ind, hit_ind, sh_len, sh_h_mapper,
                            mean_coeffs, corr_coeffs,
                            sigma2_u, sigma2_v, sigma2_e,
                            U_all, VH_all) {
   loglik <- sum(dnorm(Y_star,
     mean = x_covs %*% mean_coeffs + U_all[i_ind, ] + VH_all[hit_ind, ],
     sd = sqrt(sigma2_e)
-  ), log = T)
-  loglik <- loglik + sum(dnorm(U_all, mean = 0, sd = sqrt(sigma2_u), log = T))
+  ), log = TRUE)
+  # loglik <- loglik + sum(dnorm(U_all, mean = 0, sd = sqrt(sigma2_u), log = TRUE))
 
-  Zbeta <- z_covs[, -(1:3), drop = FALSE] %*% corr_coeffs
-  sh_singles_loc <- which(sh_len == 1)
-  sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
-  loglik <- loglik + calc_loglik(
-    which(sh_len != 1), sh_h_mapper,
-    z_covs[, 1], Zbeta, VH_all, sigma2_v
-  ) +
-    sum(dnorm(VH_all[sh_single_h_loc], mean = 0, sd = sqrt(sigma2_v), log = T))
+  # Zbeta <- z_covs[, -(1:3), drop = FALSE] %*% corr_coeffs
+  # sh_singles_loc <- which(sh_len == 1)
+  # sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
+  # loglik <- loglik + calc_loglik(
+  #   which(sh_len != 1), sh_h_mapper,
+  #   z_covs[, 1], Zbeta, VH_all, sigma2_v
+  # ) +
+  #   sum(dnorm(VH_all[sh_single_h_loc], mean = 0, sd = sqrt(sigma2_v), log = TRUE))
   return(-2 * loglik)
 }
 #' @noRd
-calcu_Deviance_area <- function(Y_star, x_covs, z_covs, i_ind, area_ind, hit_ind, sh_len,
+calcu_Deviance_area <- function(Y_star, x_covs, z_covs, i_ind, area_ind, hit_ind, sh_len, sh_h_mapper,
                                 mean_coeffs, corr_coeffs,
                                 sigma2_u, sigma2_w, sigma2_v, sigma2_e,
                                 U_all, W_all, VH_all) {
   loglik <- sum(dnorm(Y_star,
     mean = x_covs %*% mean_coeffs + U_all[i_ind, ] + VH_all[hit_ind, ] + W_all[area_ind, ],
     sd = sqrt(sigma2_e)
-  ), log = T)
-  loglik <- loglik + sum(dnorm(U_all, mean = 0, sd = sqrt(sigma2_u), log = T))
-  loglik <- loglik + sum(dnorm(W_all, mean = 0, sd = sqrt(sigma2_w), log = T))
+  ), log = TRUE)
+  # loglik <- loglik + sum(dnorm(U_all, mean = 0, sd = sqrt(sigma2_u), log = T))
+  # loglik <- loglik + sum(dnorm(W_all, mean = 0, sd = sqrt(sigma2_w), log = T))
 
-  Zbeta <- z_covs[, -(1:3), drop = FALSE] %*% corr_coeffs
-  sh_singles_loc <- which(sh_len == 1)
-  sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
-  loglik <- loglik + calc_loglik(
-    which(sh_len != 1), sh_h_mapper,
-    z_covs[, 1], Zbeta, VH_all, sigma2_v
-  ) +
-    sum(dnorm(VH_all[sh_single_h_loc], mean = 0, sd = sqrt(sigma2_v), log = T))
+  # Zbeta <- z_covs[, -(1:3), drop = FALSE] %*% corr_coeffs
+  # sh_singles_loc <- which(sh_len == 1)
+  # sh_single_h_loc <- match(sh_singles_loc, sh_h_mapper)
+  # loglik <- loglik + calc_loglik(
+  #   which(sh_len != 1), sh_h_mapper,
+  #   z_covs[, 1], Zbeta, VH_all, sigma2_v
+  # ) +
+  #   sum(dnorm(VH_all[sh_single_h_loc], mean = 0, sd = sqrt(sigma2_v), log = T))
   return(-2 * loglik)
 }
 sample_lv_grp <- function(VH_all, sigma2_e_inv, sigma2_v_inv,

@@ -33,11 +33,11 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                           init_sigma2_v = NULL) {
   K <- ncol(Y_star)
   ## record number
-  rcd_num <- nrow(Y_star)
+  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
   ## number of super-household
-  sh_num <- max(sh_ind)
+  # sh_num <- max(sh_ind)
   ## number of households
   hit_num <- max(hit_ind)
 
@@ -172,7 +172,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     if (calcu_DIC) {
       Dtheta_all[iter] <- calcu_Deviance(
         Y_star, x_covs, z_covs, i_ind, hit_ind,
-        sh_len, mean_coeffs, corr_coeffs,
+        sh_len, sh_h_mapper, mean_coeffs, corr_coeffs,
         sigma2_u, sigma2_v, sigma2_e, U_all, VH_all
       )
       if (iter > burn_in) {
@@ -196,7 +196,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     }
   }
   DIC_value <- 2 * Dtheta_mean - calcu_Deviance(
-    Y_star, x_covs, z_covs, i_ind, hit_ind, sh_len,
+    Y_star, x_covs, z_covs, i_ind, hit_ind, sh_len, sh_h_mapper,
     mean_coeffs_mean, corr_coeffs_mean,
     sigma2_u_mean, sigma2_v_mean, sigma2_e_mean,
     U_all_mean, VH_all_mean
@@ -227,7 +227,8 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
     "VH_all" = VH_all,
     "args_preserve" = args_preserve,
     "state_preserve" = state_preserve,
-    "DIC" = DIC_value
+    "DIC" = DIC_value,
+    "-2log_cond_lik" = Dtheta_all
   ))
 }
 
@@ -248,13 +249,13 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size,
 
   K <- ncol(Y_star)
   ## record number
-  rcd_num <- nrow(Y_star)
+  # rcd_num <- nrow(Y_star)
   ## individual number
-  ind_num <- max(i_ind)
+  # ind_num <- max(i_ind)
   ## number of super-household
-  sh_num <- max(sh_ind)
+  # sh_num <- max(sh_ind)
   ## number of households
-  hit_num <- max(hit_ind)
+  # hit_num <- max(hit_ind)
 
   mean_cov_num <- ncol(x_covs)
   corr_cov_num <- ncol(z_covs) - 3
@@ -420,11 +421,11 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
                                   init_sigma2_v = NULL) {
   K <- ncol(Y_star)
   ## record number
-  rcd_num <- nrow(Y_star)
+  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
   ## number of super-household
-  sh_num <- max(sh_ind)
+  # sh_num <- max(sh_ind)
   ## number of households
   hit_num <- max(hit_ind)
 
@@ -616,11 +617,11 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
                                init_sigma2_w = NULL) {
   K <- ncol(Y_star)
   ## record number
-  rcd_num <- nrow(Y_star)
+  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
   ## number of super-household
-  sh_num <- max(sh_ind)
+  # sh_num <- max(sh_ind)
   ## number of households
   hit_num <- max(hit_ind)
   ## number of areas
@@ -775,7 +776,7 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
     if (calcu_DIC) {
       Dtheta_all[iter] <- calcu_Deviance_area(
         Y_star, x_covs, z_covs, i_ind, area_ind, hit_ind,
-        sh_len, mean_coeffs, corr_coeffs,
+        sh_len, sh_h_mapper, mean_coeffs, corr_coeffs,
         sigma2_u, sigma2_w, sigma2_v, sigma2_e,
         U_all, W_all, VH_all
       )
@@ -802,7 +803,7 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
     }
   }
   DIC_value <- 2 * Dtheta_mean - calcu_Deviance_area(
-    Y_star, x_covs, z_covs, i_ind, area_ind, hit_ind, sh_len,
+    Y_star, x_covs, z_covs, i_ind, area_ind, hit_ind, sh_len, sh_h_mapper,
     mean_coeffs_mean, corr_coeffs_mean,
     sigma2_u_mean, sigma2_w_mean, sigma2_v_mean, sigma2_e_mean,
     U_all_mean, W_all_mean, VH_all_mean
@@ -836,6 +837,7 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
     "VH_all" = VH_all,
     "args_preserve" = args_preserve,
     "state_preserve" = state_preserve,
-    "DIC" = DIC_value
+    "DIC" = DIC_value,
+    "-2log_cond_lik" = Dtheta_all
   ))
 }
