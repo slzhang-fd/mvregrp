@@ -1,6 +1,6 @@
 Package: mvregrp
 Title: Multivariate grouped random effect probit model estimation
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: c(
     person("Siliang", "Zhang",
            role = c("aut", "cre"),

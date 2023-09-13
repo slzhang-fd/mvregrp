@@ -683,7 +683,7 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
   Dtheta_all <- rep(0, max_steps)
 
   mean_coeffs_mean <- matrix(0, mean_cov_num, K)
-  corr_coeffs_mean <- matrix(0, mean_cov_num, K)
+  corr_coeffs_mean <- matrix(0, corr_cov_num, K)
   Dtheta_mean <- 0
   sigma2_e_mean <- sigma2_v_mean <- sigma2_u_mean <- sigma2_w_mean <- 0
 
