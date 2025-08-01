@@ -89,7 +89,7 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
 
   mean_coeffs_mean <- matrix(0, mean_cov_num, K)
-  corr_coeffs_mean <- matrix(0, mean_cov_num, K)
+  corr_coeffs_mean <- matrix(0, corr_cov_num, K) ## modified from mean_cov_num here, should fix the problem on Aug 1, 2025.
   Dtheta_mean <- 0
   sigma2_e_mean <- sigma2_v_mean <- sigma2_u_mean <- 0
 
