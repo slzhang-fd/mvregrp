@@ -30,7 +30,7 @@ devtools::install_github("slzhang-fd/mvregrp")
 The package includes a test dataset (`test.rda`) that demonstrates the model functionality. The data were generated following the design of the simulation study described in Section 6.1 with heterogeneous between-household correlation structure. The dataset contains 1000 superhouseholds and includes the following components:
 
 - **ysim**: Binary outcome variable
-- **x_covs**: Mean model design matrix with variables corresponding to x0-x4 in Section 6.1
+- **x_covs**: Mean model design matrix
 - **corr_covs**: Correlation model design matrix 
 - **i_ind**: Individual indices
 - **sh_ind**: Super-household indices
@@ -38,7 +38,7 @@ The package includes a test dataset (`test.rda`) that demonstrates the model fun
 
 ### Data Structure Examples
 
-The `x_covs` variables correspond to x0-x4 in Section 6.1:
+The `x_covs` variables correspond to x0-x4 in Section 6.1 of the paper:
 ```
 head(x_covs):
      cons age50d10 highed tenurehh2 tenurehh3
@@ -50,7 +50,7 @@ head(x_covs):
 [6,]    1      1.4      0         0         0
 ```
 
-The `corr_covs` contain correlation model covariates. The first three variables are the superhousehold ID and the household IDs for each pair of observations in a superhousehold (where there is more than one household). Note that the order of corr_covs records does not matter:
+The `corr_covs` contain correlation model covariates. The first three variables are the superhousehold ID and the household IDs for each pair of observations in a superhousehold (where there is more than one household, and the order of corr_covs records does not matter). The other variables correspond to z0-z4 in Section 6.1 of the paper:
 ```
 head(corr_covs):
   sh_ind hit_ind1 hit_ind2 cons part1parch0 part0parch1 part0parch0      pbothc
