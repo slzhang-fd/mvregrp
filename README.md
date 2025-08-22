@@ -25,6 +25,43 @@ Install the development version from GitHub:
 devtools::install_github("slzhang-fd/mvregrp")
 ```
 
+## Test Data
+
+The package includes a test dataset (`test.rda`) that demonstrates the model functionality. The data were generated following the design of the simulation study described in Section 6.1 with heterogeneous between-household correlation structure. The dataset contains 1000 superhouseholds and includes the following components:
+
+- **ysim**: Binary outcome variable
+- **x_covs**: Mean model design matrix with variables corresponding to x0-x4 in Section 6.1
+- **corr_covs**: Correlation model design matrix 
+- **i_ind**: Individual indices
+- **sh_ind**: Super-household indices
+- **hit_ind**: Household indices
+
+### Data Structure Examples
+
+The `x_covs` variables correspond to x0-x4 in Section 6.1:
+```
+head(x_covs):
+     cons age50d10 highed tenurehh2 tenurehh3
+[1,]    1      1.0      0         0         0
+[2,]    1      1.1      0         0         0
+[3,]    1      1.2      0         0         0
+[4,]    1      1.3      0         0         0
+[5,]    1      1.2      0         0         0
+[6,]    1      1.4      0         0         0
+```
+
+The `corr_covs` contain correlation model covariates. The first three variables are the superhousehold ID and the household IDs for each pair of observations in a superhousehold (where there is more than one household). Note that the order of corr_covs records does not matter:
+```
+head(corr_covs):
+  sh_ind hit_ind1 hit_ind2 cons part1parch0 part0parch1 part0parch0      pbothc
+1      2     1377     1378    1           1           0           0  0.00000000
+2      4     1579     1580    1           1           0           0  0.30000001
+3      4     1579     1581    1           0           0           0  0.10000002
+4      4     1579     1582    1           0           0           0 -0.35714285
+5      4     1579     1583    1           0           0           0 -0.09999999
+6      4     1579     1584    1           0           1           0 -0.25000000
+```
+
 ## Usage
 
 Load example data and fit a grouped random effect model:
@@ -34,9 +71,7 @@ library(mvregrp)
 library(matrixStats)  # For colSds, colQuantiles
 library(coda)         # For effectiveSize
 
-# Load pre-prepared test data
-# This includes: ysim (outcome), x_covs (mean model covariates), 
-# corr_covs (correlation model covariates), and index vectors
+# Load the test dataset
 data_path <- system.file("extdata", "test.rda", package = "mvregrp")
 load(data_path)
 
@@ -44,7 +79,7 @@ load(data_path)
 nsample <- 10000
 burn_in <- 5000
 
-# Run grouped random effect probit model
+# Run grouped random effect model
 result <- svregrp_Gibbs(
   Y_star = as.matrix(ysim),           # Outcome variable
   x_covs = as.matrix(x_covs),         # Mean model design matrix
@@ -88,6 +123,8 @@ print(round(effective_sample_size))
 
 ## Model Variants
 
+Note that all specifications include individual random effects.
+
 | Function | Description |
 |----------|-------------|
 | `svregrp_Gibbs()` | Standard grouped household effect model |
@@ -97,12 +134,13 @@ print(round(effective_sample_size))
 
 ## Model Framework
 
-The package implements hierarchical models for longitudinal household data with:
+The package implements random effects models for longitudinal data with the following complex non-hierarchical structure:
 
-- **Nested structure**: Individuals within households within superhouseholds
 - **Time-varying composition**: Household membership can change over time  
 - **Correlated effects**: Household random effects correlated within superhousehold clusters
-- **Flexible correlations**: Correlation structure depends on household relationship covariates
+- **Flexible between-household correlations**: Correlation structure depends on household relationship covariates
+
+Details of the structure are given after eq. (7) of the paper.
 
 Applications include health outcomes, social behaviors, and economic variables in studies like the UK Household Longitudinal Study (UKHLS).
 
