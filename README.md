@@ -1,50 +1,30 @@
-# mvregrp: Multivariate Grouped Random Effect Probit Model Estimation
+# mvregrp: Multivariate Grouped Random Effect Model Estimation
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The `mvregrp` package implements efficient Gibbs sampling procedures for multivariate grouped random effect probit model estimation. This package is designed for analyzing longitudinal data with time-varying household membership, allowing for correlated random effects within 'superhousehold' clusters.
+The `mvregrp` package implements efficient Gibbs sampling for multivariate grouped random effect models, designed for analyzing longitudinal household panel data with time-varying membership and correlated effects within clustered 'superhouseholds'.
 
 ## Key Features
 
-- **Grouped Random Effects**: Models household effects that can change over time as household composition changes
-- **Correlated Effects**: Allows correlation between household random effects within superhousehold clusters
-- **Covariate-Dependent Correlations**: Models correlations as functions of covariates describing household relationships
-- **Robust MCMC**: Novel MCMC estimation procedures that ensure positive definiteness of correlation matrices
-- **Multiple Model Variants**: Supports models with and without area effects, and with different household structures
+- **Grouped Random Effects**: Household effects that adapt to changing composition over time
+- **Correlated Effects**: Models correlations between household effects within superhousehold clusters  
+- **Covariate-Dependent Correlations**: Correlation structure depends on household relationship covariates
+- **Robust MCMC**: Novel algorithms ensuring positive definite correlation matrices
+- **Multiple Variants**: Models with/without area effects and different household structures
 
+## Installation
 
-## Model Variants
-
-The package provides several modeling functions:
-
-- `svregrp_Gibbs()`: Standard grouped household effect model
-- `svregrp_Gibbs_area()`: Model with additional area random effects  
-- `svregrp_Gibbs_area_nohe()`: Simplified model without household effects
-- `svregrp_Gibbs_mchains()`: Multiple chain implementation for convergence diagnostics
-
-## Model Description
-
-The package implements a hierarchical model for longitudinal data where:
-
-- Individuals are nested within households
-- Households can change composition over time
-- Related households are grouped into "superhouseholds" 
-- Random effects are allowed to be correlated within superhousehold clusters
-- Correlations can depend on covariates describing household relationships
-
-This is particularly useful for analyzing health outcomes, social behaviors, or economic variables in household panel studies like the UK Household Longitudinal Study (UKHLS).
-
-
-## Installation & Usage
-
-You can install the development version of mvregrp from GitHub:
+Install the development version from GitHub:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("slzhang-fd/mvregrp")
 ```
-### Basic Example
+
+## Usage
+
+Load example data and fit a grouped random effect model:
 
 ```r
 library(mvregrp)
@@ -103,9 +83,29 @@ print("Effective sample sizes:")
 print(round(effective_sample_size))
 ```
 
+## Model Variants
+
+| Function | Description |
+|----------|-------------|
+| `svregrp_Gibbs()` | Standard grouped household effect model |
+| `svregrp_Gibbs_area()` | Includes additional area random effects |
+| `svregrp_Gibbs_area_nohe()` | Area effects only (no household effects) |
+| `svregrp_Gibbs_mchains()` | Multiple chains for convergence diagnostics |
+
+## Model Framework
+
+The package implements hierarchical models for longitudinal household data with:
+
+- **Nested structure**: Individuals within households within superhouseholds
+- **Time-varying composition**: Household membership can change over time  
+- **Correlated effects**: Household random effects correlated within superhousehold clusters
+- **Flexible correlations**: Correlation structure depends on household relationship covariates
+
+Applications include health outcomes, social behaviors, and economic variables in studies like the UK Household Longitudinal Study (UKHLS).
+
 ## Citation
 
-If you use this package in your research, please cite:
+Please cite this package as:
 
 > Steele, F., Zhang, S., & Clarke, P. (2025). Analysis of household effects on longitudinal health outcomes using a joint mean-correlation multilevel model with grouped random effects. *Manuscript under review*.
 
