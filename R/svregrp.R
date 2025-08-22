@@ -28,38 +28,33 @@
 #'   \item{VH_all}{Household random effects}
 #'   \item{DIC}{Deviance Information Criterion}
 #' @examples
-#' # Simulate simple household data
-#' set.seed(123)
-#' n_obs <- 100
-#' n_ind <- 50
-#' n_hh <- 30
-#' 
-#' # Create response matrix
-#' Y_star <- matrix(rnorm(n_obs), ncol = 1)
-#' 
-#' # Create covariate matrices
-#' x_covs <- cbind(1, rnorm(n_obs), rbinom(n_obs, 1, 0.5))
-#' z_covs <- cbind(sample(1:10, n_obs, replace = TRUE),
-#'                 rnorm(n_obs), rnorm(n_obs), rnorm(n_obs))
-#' 
-#' # Create index vectors
-#' i_ind <- sample(1:n_ind, n_obs, replace = TRUE)
-#' sh_ind <- sample(1:15, n_obs, replace = TRUE)
-#' hit_ind <- sample(1:n_hh, n_obs, replace = TRUE)
-#' 
-#' # Set MCMC parameters
-#' max_steps <- 100  # Use small number for example
-#' cor_step_size <- rep(0.1, ncol(z_covs) - 3)
-#' 
 #' \donttest{
-#' # Run Gibbs sampler
-#' result <- svregrp_Gibbs(Y_star, x_covs, z_covs,
-#'                         i_ind, sh_ind, hit_ind,
-#'                         max_steps, cor_step_size,
-#'                         verbose = FALSE)
-#' 
-#' # Check convergence
-#' plot(result$params_mcmc_obj)
+#' # Load example household panel data
+#' data_path <- system.file("extdata", "test.rda", package = "mvregrp")
+#' load(data_path)
+#'
+#' # Set MCMC parameters
+#' nsample <- 1000
+#' burn_in <- 500
+#'
+#' # Run grouped random effect probit model
+#' result <- svregrp_Gibbs(
+#'   Y_star = as.matrix(ysim), # Outcome variable
+#'   x_covs = as.matrix(x_covs), # Mean model design matrix
+#'   z_covs = as.matrix(corr_covs), # Correlation model design matrix
+#'   i_ind = i_ind, # Individual indices
+#'   sh_ind = sh_ind, # Super-household indices
+#'   hit_ind = hit_ind, # Household indices
+#'   max_steps = nsample, # Total MCMC iterations
+#'   cor_step_size = c(rep(0.01, ncol(corr_covs) - 3), 0.001), # MH jump step sizes for correlation parameters, needs pre-tunning
+#'   corr_vs_diag = FALSE, # Use full correlation structure
+#'   verbose = FALSE # Suppress progress output
+#' )
+#'
+#' # Extract posterior samples (after burn-in)
+#' chains <- as.data.frame(result$params_mcmc_obj)[(burn_in + 1):nsample, ]
+#' posterior_means <- colMeans(chains)
+#' print(round(posterior_means, 3))
 #' }
 #' @export
 svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
@@ -869,7 +864,7 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
 }
 
 #' Gibbs sampling of the grouped household effect model with area random effect (remove the household effect)
-#' 
+#'
 #' This function takes response, multilevel indices as input and
 #' returns MCMC sample chains of model parameters and latent variables.
 #'
@@ -883,34 +878,34 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
 #' @return A data frame with columns of MCMC chains of sampled parameters and latent variables.
 #' @export
 svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
-                               i_ind, area_ind,
-                               max_steps,
-                               calcu_DIC = TRUE,
-                               burn_in = 1,
-                               verbose = TRUE,
-                               init_mean_coeffs = NULL,
-                               init_sigma2_e = NULL,
-                               init_sigma2_u = NULL,
-                               init_sigma2_w = NULL) {
+                                    i_ind, area_ind,
+                                    max_steps,
+                                    calcu_DIC = TRUE,
+                                    burn_in = 1,
+                                    verbose = TRUE,
+                                    init_mean_coeffs = NULL,
+                                    init_sigma2_e = NULL,
+                                    init_sigma2_u = NULL,
+                                    init_sigma2_w = NULL) {
   K <- ncol(Y_star)
   ## individual number
   ind_num <- max(i_ind)
   ## number of households
   ## number of areas
   area_num <- max(area_ind)
-  
+
   mean_cov_num <- ncol(x_covs)
-  
+
   ## Functions to map ind to # of records
   u_len <- aggregate(i_ind, by = list(i_ind), length)$x
   area_len <- aggregate(area_ind, by = list(area_ind), length)$x
-  
+
   ## initialize random variables
   U_all <- matrix(rnorm(ind_num * K), ind_num, K)
   W_all <- matrix(rnorm(area_num * K), area_num, K)
   U_all_mean <- matrix(rnorm(ind_num * K), ind_num, K)
   W_all_mean <- matrix(rnorm(area_num * K), area_num, K)
-  
+
   ## initialize parameters
   mean_coeffs <- matrix(0, mean_cov_num, K)
   sigma2_e <- sigma2_u <- sigma2_w <- 1
@@ -930,18 +925,18 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
   if (!is.null(init_sigma2_w)) {
     sigma2_w <- init_sigma2_w
   }
-  
+
   mean_coeffs_all <- matrix(0, max_steps, mean_cov_num * K)
   colnames(mean_coeffs_all) <- colnames(x_covs)
   sigma2_e_all <- sigma2_u_all <- sigma2_w_all <- rep(0, max_steps)
   Dtheta_all <- rep(0, max_steps)
-  
+
   mean_coeffs_mean <- matrix(0, mean_cov_num, K)
   Dtheta_mean <- 0
   sigma2_e_mean <- sigma2_u_mean <- sigma2_w_mean <- 0
-  
+
   XtX <- t(x_covs) %*% x_covs
-  
+
   ## for plotting progress bar
   init <- numeric(max_steps)
   end <- numeric(max_steps)
@@ -955,33 +950,34 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
       "\r|%s%s|% 3s%% | Execution time:%s | Estimated time remaining:%s | rejection rate:%s       ",
       strrep("=", step), strrep(" ", width - step - extra),
       round(iter / max_steps * 100), my_seconds_to_period(time),
-      my_seconds_to_period(remainining), 0)
+      my_seconds_to_period(remainining), 0
+    )
     if (verbose) {
       cat(text)
     } else if (!(iter %% 100)) {
       cat(text)
     }
-    
+
     sigma2_e_inv <- 1.0 / sigma2_e
     sigma2_u_inv <- 1.0 / sigma2_u
     sigma2_w_inv <- 1.0 / sigma2_w
-    
+
     Xbeta <- x_covs %*% mean_coeffs
     ## stochastic E step
     # sample U
     U_all <- sample_lv_ge(
       U_all, sigma2_e_inv, sigma2_u_inv, u_len,
       rowsum(Y_star - Xbeta - W_all[area_ind, ],
-             i_ind,
-             reorder = TRUE
+        i_ind,
+        reorder = TRUE
       )
     )
     # sample W
     W_all <- sample_lv_ge(
       W_all, sigma2_e_inv, sigma2_w_inv, area_len,
       rowsum(Y_star - Xbeta - U_all[i_ind, ],
-             area_ind,
-             reorder = TRUE
+        area_ind,
+        reorder = TRUE
       )
     )
     # # sample V
@@ -1003,13 +999,13 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
     sigma2_u <- params$sigma2_u
     sigma2_e <- params$sigma2_e
     sigma2_w <- params$sigma2_w
-    
+
     # store results
     mean_coeffs_all[iter, ] <- c(mean_coeffs)
     sigma2_e_all[iter] <- sigma2_e
     sigma2_u_all[iter] <- sigma2_u
     sigma2_w_all[iter] <- sigma2_w
-    
+
     ## progress bar
     end[iter] <- Sys.time()
     time <- round(sum(end - init), 0)
@@ -1083,4 +1079,3 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
     "-2log_cond_lik" = Dtheta_all
   ))
 }
-

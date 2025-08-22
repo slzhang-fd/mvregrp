@@ -73,37 +73,32 @@ This function takes response, multilevel indices as input and
 returns MCMC sample chains of model parameters and latent variables.
 }
 \examples{
-# Simulate simple household data
-set.seed(123)
-n_obs <- 100
-n_ind <- 50
-n_hh <- 30
-
-# Create response matrix
-Y_star <- matrix(rnorm(n_obs), ncol = 1)
-
-# Create covariate matrices
-x_covs <- cbind(1, rnorm(n_obs), rbinom(n_obs, 1, 0.5))
-z_covs <- cbind(sample(1:10, n_obs, replace = TRUE),
-                rnorm(n_obs), rnorm(n_obs), rnorm(n_obs))
-
-# Create index vectors
-i_ind <- sample(1:n_ind, n_obs, replace = TRUE)
-sh_ind <- sample(1:15, n_obs, replace = TRUE)
-hit_ind <- sample(1:n_hh, n_obs, replace = TRUE)
+\donttest{
+# Load example household panel data
+data_path <- system.file("extdata", "test.rda", package = "mvregrp")
+load(data_path)
 
 # Set MCMC parameters
-max_steps <- 100  # Use small number for example
-cor_step_size <- rep(0.1, ncol(z_covs) - 3)
+nsample <- 1000
+burn_in <- 500
 
-\donttest{
-# Run Gibbs sampler
-result <- svregrp_Gibbs(Y_star, x_covs, z_covs,
-                        i_ind, sh_ind, hit_ind,
-                        max_steps, cor_step_size,
-                        verbose = FALSE)
+# Run grouped random effect probit model
+result <- svregrp_Gibbs(
+  Y_star = as.matrix(ysim), # Outcome variable
+  x_covs = as.matrix(x_covs), # Mean model design matrix
+  z_covs = as.matrix(corr_covs), # Correlation model design matrix
+  i_ind = i_ind, # Individual indices
+  sh_ind = sh_ind, # Super-household indices
+  hit_ind = hit_ind, # Household indices
+  max_steps = nsample, # Total MCMC iterations
+  cor_step_size = c(rep(0.01, ncol(corr_covs) - 3), 0.001), # MH jump step sizes for correlation parameters, needs pre-tunning
+  corr_vs_diag = FALSE, # Use full correlation structure
+  verbose = FALSE # Suppress progress output
+)
 
-# Check convergence
-plot(result$params_mcmc_obj)
+# Extract posterior samples (after burn-in)
+chains <- as.data.frame(result$params_mcmc_obj)[(burn_in + 1):nsample, ]
+posterior_means <- colMeans(chains)
+print(round(posterior_means, 3))
 }
 }
