@@ -267,7 +267,6 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   ))
 }
 
-#' @export
 extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size,
                                     verbose = TRUE) {
   ## unpack arguments:
@@ -432,7 +431,30 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size,
   ))
 }
 
+#' Multiple chain Gibbs sampling for grouped household effect model
+#'
+#' This function runs multiple MCMC chains for convergence diagnostics and 
+#' provides more robust parameter estimation through multiple independent chains.
+#'
 #' @importFrom parallel mclapply detectCores
+#'
+#' @param Y_star A NN * 1 matrix containing continuous responses.
+#' @param x_covs A NN * p matrix containing covariates for the mean model.
+#' @param z_covs A matrix containing covariates for the correlation model.
+#' @param i_ind A vector containing indices for individuals.
+#' @param sh_ind A vector containing indices for super-households.
+#' @param hit_ind A vector containing indices for households.
+#' @param max_steps Length of MCMC chains to be drawn.
+#' @param cor_step_size Step sizes for correlation parameter updates.
+#' @param corr_vs_diag Whether to use diagonal correlation structure.
+#' @param num_chains Number of parallel chains to run.
+#' @param output_progress_file File name for progress output.
+#' @param init_mean_coeffs Initial values for mean coefficients.
+#' @param init_corr_coeffs Initial values for correlation coefficients.
+#' @param init_sigma2_e Initial value for error variance.
+#' @param init_sigma2_u Initial value for individual random effect variance.
+#' @param init_sigma2_v Initial value for household random effect variance.
+#' @return A list containing multiple MCMC chains as mcmc.list object for convergence diagnostics.
 #' @importFrom coda as.mcmc mcmc.list
 #' @export
 svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
