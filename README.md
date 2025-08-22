@@ -1,8 +1,7 @@
 # mvregrp
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/slzhang-fd/mvregrp/workflows/R-CMD-check/badge.svg)](https://github.com/slzhang-fd/mvregrp/actions)
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![R-CMD-check](https://github.com/slzhang-fd/mvregrp/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/slzhang-fd/mvregrp/actions/workflows/R-CMD-check.yaml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
