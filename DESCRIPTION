@@ -1,24 +1,38 @@
 Package: mvregrp
-Title: Multivariate grouped random effect probit model estimation
-Version: 0.0.5
+Title: Multivariate Grouped Random Effect Probit Model Estimation
+Version: 1.0.0
 Authors@R: c(
     person("Siliang", "Zhang",
            role = c("aut", "cre"),
            email = "zhangsiliang123@gmail.com",
            comment = c(ORCID = "0000-0002-2641-4944")),
-    person("Fiona", "steele", role = "aut")
+    person("Fiona", "Steele", role = "aut"),
+    person("Paul", "Clarke", role = "aut")
     )
+Author: Siliang Zhang [aut, cre] (<https://orcid.org/0000-0002-2641-4944>),
+  Fiona Steele [aut],
+  Paul Clarke [aut]
 Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
-Description: Efficient Gibbs sampling procedures for multivariate grouped random 
-             effect probit model estimation.
-Depends: coda, parallel
+Description: Implements efficient Gibbs sampling procedures for multivariate grouped 
+    random effect probit model estimation. The package provides methods for analyzing
+    longitudinal data with time-varying household membership, allowing for correlated
+    random effects within 'superhousehold' clusters. Includes novel MCMC estimation
+    procedures that ensure positive definiteness of correlation matrices while modeling
+    covariate-dependent correlations between household effects.
+Depends: 
+    R (>= 3.5.0),
+    coda,
+    parallel
 Imports: 
-      truncnorm,
-      mvtnorm,
-      MCMCpack,
-      matrixcalc
-License: use_gpl3_license()
+    truncnorm,
+    mvtnorm,
+    MCMCpack,
+    matrixcalc,
+    Rcpp
+License: GPL-3 + file LICENSE
 LinkingTo: Rcpp, RcppArmadillo
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+URL: https://github.com/slzhang-fd/mvregrp
+BugReports: https://github.com/slzhang-fd/mvregrp/issues

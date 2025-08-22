@@ -1,5 +1,9 @@
 #' @importFrom truncnorm rtruncnorm
 #' @importFrom mvtnorm rmvnorm
+#' @importFrom stats aggregate dnorm rnorm runif ts quantile
+#' @importFrom utils tail
+#' @importFrom graphics arrows axis
+#' @importFrom coda varnames
 #' @noRd
 sample_lv_ge <- function(X_all, sigma2_e_inv, sigma2_x_inv, x_len, temp) {
   # temp <- rowsum(Y_star - Xbeta - U_all[i_ind,] - V_all[j_ind,], jt_ind, reorder = T)
@@ -376,6 +380,29 @@ sample_sigma2 <- function(X) {
   S <- sum(t(X) %*% X)
   return(rinvgamma(n = 1, alpha + 0.5 * N, beta + 0.5 * S))
 }
+#' Plot comparison of MCMC results with true values
+#'
+#' Creates a plot showing 95% credible intervals from MCMC results
+#' along with true parameter values for validation.
+#'
+#' @param refit_res Matrix of MCMC samples with parameters in columns
+#' @param true_val Vector of true parameter values
+#' @param burn_in Number of burn-in samples to discard
+#' @examples
+#' # Simulate MCMC results
+#' set.seed(123)
+#' n_iter <- 1000
+#' n_params <- 5
+#' true_values <- c(0.5, -0.2, 1.0, 0.8, -0.5)
+#' 
+#' # Simulate MCMC chains around true values
+#' mcmc_results <- matrix(NA, n_iter, n_params)
+#' for(i in 1:n_params) {
+#'   mcmc_results[, i] <- true_values[i] + rnorm(n_iter, 0, 0.1)
+#' }
+#' 
+#' # Create comparison plot
+#' res_compare_plot(mcmc_results, true_values, burn_in = 100)
 #' @export
 res_compare_plot <- function(refit_res, true_val, burn_in) {
   refit_res <- refit_res[(burn_in + 1):nrow(refit_res), ]

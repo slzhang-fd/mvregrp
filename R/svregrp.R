@@ -17,7 +17,50 @@
 #' @param burn_in Burn in size for MCMC, default value is 1.
 #' @param calcu_DIC Whether to calculate DIC values, default value is TRUE.
 #' @param verbose Whether print information in each iteration, default value is TRUE.
-#' @return A dataframe with columns of MCMC chains of sampled parameters and latent variables.
+#' @param init_mean_coeffs Optional initial values for mean coefficients.
+#' @param init_corr_coeffs Optional initial values for correlation coefficients.
+#' @param init_sigma2_e Optional initial value for error variance.
+#' @param init_sigma2_u Optional initial value for individual random effect variance.
+#' @param init_sigma2_v Optional initial value for household random effect variance.
+#' @return A list containing:
+#'   \item{params_mcmc_obj}{MCMC chains of model parameters}
+#'   \item{U_all}{Individual random effects}
+#'   \item{VH_all}{Household random effects}
+#'   \item{DIC}{Deviance Information Criterion}
+#' @examples
+#' # Simulate simple household data
+#' set.seed(123)
+#' n_obs <- 100
+#' n_ind <- 50
+#' n_hh <- 30
+#' 
+#' # Create response matrix
+#' Y_star <- matrix(rnorm(n_obs), ncol = 1)
+#' 
+#' # Create covariate matrices
+#' x_covs <- cbind(1, rnorm(n_obs), rbinom(n_obs, 1, 0.5))
+#' z_covs <- cbind(sample(1:10, n_obs, replace = TRUE),
+#'                 rnorm(n_obs), rnorm(n_obs), rnorm(n_obs))
+#' 
+#' # Create index vectors
+#' i_ind <- sample(1:n_ind, n_obs, replace = TRUE)
+#' sh_ind <- sample(1:15, n_obs, replace = TRUE)
+#' hit_ind <- sample(1:n_hh, n_obs, replace = TRUE)
+#' 
+#' # Set MCMC parameters
+#' max_steps <- 100  # Use small number for example
+#' cor_step_size <- rep(0.1, ncol(z_covs) - 3)
+#' 
+#' \donttest{
+#' # Run Gibbs sampler
+#' result <- svregrp_Gibbs(Y_star, x_covs, z_covs,
+#'                         i_ind, sh_ind, hit_ind,
+#'                         max_steps, cor_step_size,
+#'                         verbose = FALSE)
+#' 
+#' # Check convergence
+#' plot(result$params_mcmc_obj)
+#' }
 #' @export
 svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                           i_ind, sh_ind, hit_ind,
@@ -32,12 +75,8 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
                           init_sigma2_u = NULL,
                           init_sigma2_v = NULL) {
   K <- ncol(Y_star)
-  ## record number
-  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
-  ## number of super-household
-  # sh_num <- max(sh_ind)
   ## number of households
   hit_num <- max(hit_ind)
 
@@ -63,7 +102,6 @@ svregrp_Gibbs <- function(Y_star, x_covs, z_covs,
   ## initialize parameters
   mean_coeffs <- matrix(0, mean_cov_num, K)
   corr_coeffs <- matrix(0, corr_cov_num, K)
-  # corr_coeffs <- matrix(c(0.1, 0.01, 0.1, 0.1, 0.1, -0.01, 0.02), ncol = 1)
   sigma2_e <- sigma2_v <- sigma2_u <- 1
   if (!is.null(init_mean_coeffs)) {
     mean_coeffs <- init_mean_coeffs
@@ -250,14 +288,6 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size,
   corr_vs_diag <- svregrp_res$args_preserve$corr_vs_diag
 
   K <- ncol(Y_star)
-  ## record number
-  # rcd_num <- nrow(Y_star)
-  ## individual number
-  # ind_num <- max(i_ind)
-  ## number of super-household
-  # sh_num <- max(sh_ind)
-  ## number of households
-  # hit_num <- max(hit_ind)
 
   mean_cov_num <- ncol(x_covs)
   corr_cov_num <- ncol(z_covs) - 3
@@ -290,7 +320,7 @@ extendMCMC_svregrpGibbs <- function(svregrp_res, max_steps, cor_step_size,
   sigma2_e_all <- sigma2_v_all <- sigma2_u_all <- rep(0, max_steps)
   XtX <- t(x_covs) %*% x_covs
 
-  # ## for plotting progress bar
+  ## Progress tracking
   init <- numeric(max_steps)
   end <- numeric(max_steps)
   extra <- 6
@@ -422,12 +452,8 @@ svregrp_Gibbs_mchains <- function(Y_star, x_covs, z_covs,
                                   init_sigma2_u = NULL,
                                   init_sigma2_v = NULL) {
   K <- ncol(Y_star)
-  ## record number
-  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
-  ## number of super-household
-  # sh_num <- max(sh_ind)
   ## number of households
   hit_num <- max(hit_ind)
 
@@ -618,12 +644,8 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
                                init_sigma2_v = NULL,
                                init_sigma2_w = NULL) {
   K <- ncol(Y_star)
-  ## record number
-  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
-  ## number of super-household
-  # sh_num <- max(sh_ind)
   ## number of households
   hit_num <- max(hit_ind)
   ## number of areas
@@ -654,7 +676,6 @@ svregrp_Gibbs_area <- function(Y_star, x_covs, z_covs,
   ## initialize parameters
   mean_coeffs <- matrix(0, mean_cov_num, K)
   corr_coeffs <- matrix(0, corr_cov_num, K)
-  # corr_coeffs <- matrix(c(0.1, 0.01, 0.1, 0.1, 0.1, -0.01, 0.02), ncol = 1)
   sigma2_e <- sigma2_v <- sigma2_u <- sigma2_w <- 1
   if (!is.null(init_mean_coeffs)) {
     mean_coeffs <- init_mean_coeffs
@@ -872,49 +893,31 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
                                init_sigma2_u = NULL,
                                init_sigma2_w = NULL) {
   K <- ncol(Y_star)
-  ## record number
-  # rcd_num <- nrow(Y_star)
   ## individual number
   ind_num <- max(i_ind)
-  ## number of super-household
-  # sh_num <- max(sh_ind)
   ## number of households
-  # hit_num <- max(hit_ind)
   ## number of areas
   area_num <- max(area_ind)
   
   mean_cov_num <- ncol(x_covs)
-  # corr_cov_num <- ncol(z_covs) - 3
   
-  ## table for unique superhousehold id -> household id
-  # tb_sh_hit <- unique(data.frame(sh_ind, hit_ind))
-  # sh_h_mapper <- tb_sh_hit$sh_ind
-  
-  ## length for each superhouseholds
-  # sh_len <- aggregate(tb_sh_hit$sh_ind, by = list(tb_sh_hit$sh_ind), length)$x
   ## Functions to map ind to # of records
   u_len <- aggregate(i_ind, by = list(i_ind), length)$x
-  # hit_len <- aggregate(hit_ind, by = list(hit_ind), length)$x
   area_len <- aggregate(area_ind, by = list(area_ind), length)$x
   
   ## initialize random variables
   U_all <- matrix(rnorm(ind_num * K), ind_num, K)
-  # VH_all <- matrix(rnorm(hit_num * K), hit_num, K)
   W_all <- matrix(rnorm(area_num * K), area_num, K)
   U_all_mean <- matrix(rnorm(ind_num * K), ind_num, K)
-  # VH_all_mean <- matrix(rnorm(hit_num * K), hit_num, K)
   W_all_mean <- matrix(rnorm(area_num * K), area_num, K)
   
   ## initialize parameters
   mean_coeffs <- matrix(0, mean_cov_num, K)
-  # corr_coeffs <- matrix(0, corr_cov_num, K)
-  # corr_coeffs <- matrix(c(0.1, 0.01, 0.1, 0.1, 0.1, -0.01, 0.02), ncol = 1)
   sigma2_e <- sigma2_u <- sigma2_w <- 1
   if (!is.null(init_mean_coeffs)) {
     mean_coeffs <- init_mean_coeffs
   }
   # if (!is.null(init_corr_coeffs)) {
-  #   corr_coeffs <- init_corr_coeffs
   # }
   if (!is.null(init_sigma2_e)) {
     sigma2_e <- init_sigma2_e
@@ -923,21 +926,17 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
     sigma2_u <- init_sigma2_u
   }
   # if (!is.null(init_sigma2_v)) {
-  #   sigma2_v <- init_sigma2_v
   # }
   if (!is.null(init_sigma2_w)) {
     sigma2_w <- init_sigma2_w
   }
   
   mean_coeffs_all <- matrix(0, max_steps, mean_cov_num * K)
-  # corr_coeffs_all <- matrix(0, max_steps, corr_cov_num * K)
   colnames(mean_coeffs_all) <- colnames(x_covs)
-  # colnames(corr_coeffs_all) <- colnames(z_covs)[-(1:3)]
   sigma2_e_all <- sigma2_u_all <- sigma2_w_all <- rep(0, max_steps)
   Dtheta_all <- rep(0, max_steps)
   
   mean_coeffs_mean <- matrix(0, mean_cov_num, K)
-  # corr_coeffs_mean <- matrix(0, corr_cov_num, K)
   Dtheta_mean <- 0
   sigma2_e_mean <- sigma2_u_mean <- sigma2_w_mean <- 0
   
@@ -949,7 +948,6 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
   extra <- 6
   width <- 30
   time <- remainining <- 0
-  # rejection_rate <- rep(0, corr_cov_num + 1)
   for (iter in 1:max_steps) {
     init[iter] <- Sys.time()
     step <- round(iter / max_steps * (width - extra))
@@ -969,7 +967,6 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
     sigma2_w_inv <- 1.0 / sigma2_w
     
     Xbeta <- x_covs %*% mean_coeffs
-    # Zbeta <- z_covs[, -(1:3), drop = FALSE] %*% corr_coeffs
     ## stochastic E step
     # sample U
     U_all <- sample_lv_ge(
@@ -988,7 +985,6 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
       )
     )
     # # sample V
-    # VH_all <- sample_lv_grp(
     #   VH_all, sigma2_e_inv, sigma2_v_inv,
     #   sh_len, sh_h_mapper, hit_len, Zbeta, z_covs[, 1],
     #   rowsum(Y_star - Xbeta - U_all[i_ind, ] - W_all[area_ind, ],
@@ -997,13 +993,6 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
     #   )
     # )
     # update parameters
-    # params <- sample_params_he_area(
-    #   x_covs, z_covs, XtX, Y_star, U_all, VH_all, W_all,
-    #   mean_coeffs, corr_coeffs,
-    #   sigma2_e, sigma2_u, sigma2_v,
-    #   i_ind, area_ind, hit_ind, sh_len, sh_h_mapper,
-    #   cor_step_size, corr_vs_diag
-    # )
     params <- sample_params_he_area_nohe(
       x_covs, XtX, Y_star, U_all, W_all,
       mean_coeffs,
@@ -1011,18 +1000,14 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
       i_ind, area_ind
     )
     mean_coeffs <- params$mean_coeffs
-    # corr_coeffs <- params$corr_coeffs
     sigma2_u <- params$sigma2_u
-    # sigma2_v <- params$sigma2_v
     sigma2_e <- params$sigma2_e
     sigma2_w <- params$sigma2_w
     
     # store results
     mean_coeffs_all[iter, ] <- c(mean_coeffs)
-    # corr_coeffs_all[iter, ] <- c(corr_coeffs)
     sigma2_e_all[iter] <- sigma2_e
     sigma2_u_all[iter] <- sigma2_u
-    # sigma2_v_all[iter] <- sigma2_v
     sigma2_w_all[iter] <- sigma2_w
     
     ## progress bar
@@ -1043,22 +1028,17 @@ svregrp_Gibbs_area_nohe <- function(Y_star, x_covs,
       if (iter > burn_in) {
         U_all_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * U_all_mean + 1.0 / (iter - burn_in) * U_all
         W_all_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * W_all_mean + 1.0 / (iter - burn_in) * W_all
-        # VH_all_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * VH_all_mean + 1.0 / (iter - burn_in) * VH_all
         mean_coeffs_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * mean_coeffs_mean +
           1.0 / (iter - burn_in) * mean_coeffs
-        # corr_coeffs_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * corr_coeffs_mean +
-        #   1.0 / (iter - burn_in) * corr_coeffs
         sigma2_e_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * sigma2_e_mean + 1.0 / (iter - burn_in) * sigma2_e
         sigma2_u_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * sigma2_u_mean + 1.0 / (iter - burn_in) * sigma2_u
         sigma2_w_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * sigma2_w_mean + 1.0 / (iter - burn_in) * sigma2_w
-        # sigma2_v_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * sigma2_v_mean + 1.0 / (iter - burn_in) * sigma2_v
         Dtheta_mean <- (iter - burn_in - 1.0) / (iter - burn_in) * Dtheta_mean +
           1.0 / (iter - burn_in) * Dtheta_all[iter]
       }
     }
     # if (!corr_vs_diag) {
     #   if (iter %% 100 == 0) {
-    #     rejection_rate <- colMeans(diff(cbind(corr_coeffs_all, sigma2_v_all)[(iter - 99):iter, , drop = FALSE]) == 0)
     #   }
     # }
   }

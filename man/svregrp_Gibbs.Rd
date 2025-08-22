@@ -50,11 +50,60 @@ default value is FALSE.}
 \item{burn_in}{Burn in size for MCMC, default value is 1.}
 
 \item{verbose}{Whether print information in each iteration, default value is TRUE.}
+
+\item{init_mean_coeffs}{Optional initial values for mean coefficients.}
+
+\item{init_corr_coeffs}{Optional initial values for correlation coefficients.}
+
+\item{init_sigma2_e}{Optional initial value for error variance.}
+
+\item{init_sigma2_u}{Optional initial value for individual random effect variance.}
+
+\item{init_sigma2_v}{Optional initial value for household random effect variance.}
 }
 \value{
-A dataframe with columns of MCMC chains of sampled parameters and latent variables.
+A list containing:
+\item{params_mcmc_obj}{MCMC chains of model parameters}
+\item{U_all}{Individual random effects}
+\item{VH_all}{Household random effects}
+\item{DIC}{Deviance Information Criterion}
 }
 \description{
 This function takes response, multilevel indices as input and
 returns MCMC sample chains of model parameters and latent variables.
+}
+\examples{
+# Simulate simple household data
+set.seed(123)
+n_obs <- 100
+n_ind <- 50
+n_hh <- 30
+
+# Create response matrix
+Y_star <- matrix(rnorm(n_obs), ncol = 1)
+
+# Create covariate matrices
+x_covs <- cbind(1, rnorm(n_obs), rbinom(n_obs, 1, 0.5))
+z_covs <- cbind(sample(1:10, n_obs, replace = TRUE),
+                rnorm(n_obs), rnorm(n_obs), rnorm(n_obs))
+
+# Create index vectors
+i_ind <- sample(1:n_ind, n_obs, replace = TRUE)
+sh_ind <- sample(1:15, n_obs, replace = TRUE)
+hit_ind <- sample(1:n_hh, n_obs, replace = TRUE)
+
+# Set MCMC parameters
+max_steps <- 100  # Use small number for example
+cor_step_size <- rep(0.1, ncol(z_covs) - 3)
+
+\donttest{
+# Run Gibbs sampler
+result <- svregrp_Gibbs(Y_star, x_covs, z_covs,
+                        i_ind, sh_ind, hit_ind,
+                        max_steps, cor_step_size,
+                        verbose = FALSE)
+
+# Check convergence
+plot(result$params_mcmc_obj)
+}
 }
