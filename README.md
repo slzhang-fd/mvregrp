@@ -1,7 +1,12 @@
-# mvregrp: Multivariate Grouped Random Effect Model Estimation
+# mvregrp
 
 <!-- badges: start -->
+[![R-CMD-check](https://github.com/slzhang-fd/mvregrp/workflows/R-CMD-check/badge.svg)](https://github.com/slzhang-fd/mvregrp/actions)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
+
+**Multivariate Grouped Random Effect Model Estimation**
 
 The `mvregrp` package implements efficient Gibbs sampling for multivariate grouped random effect models, designed for analyzing longitudinal household panel data with time-varying membership and correlated effects within clustered 'superhouseholds'.
 
