@@ -6,13 +6,13 @@
 
 **Multivariate Grouped Random Effect Model Estimation**
 
-The `mvregrp` package implements efficient Gibbs sampling for multivariate grouped random effect models, designed for analyzing longitudinal household panel data with time-varying membership and correlated effects within clustered 'superhouseholds'.
+The `mvregrp` package implements efficient Gibbs sampling for multivariate grouped random effect models, designed for analyzing household panel data with time-varying household membership and correlation between household random effects within 'superhousehold' clusters.
 
 ## Key Features
 
 - **Grouped Random Effects**: Household effects that adapt to changing composition over time
-- **Correlated Effects**: Models correlations between household effects within superhousehold clusters  
-- **Covariate-Dependent Correlations**: Correlation structure depends on household relationship covariates
+- **Correlated Random Effects**: Models correlations between household effects within superhousehold clusters  
+- **Covariate-Dependent Random Effect Correlations**: Correlation structure depends on household relationship covariates
 - **Robust MCMC**: Novel algorithms ensuring positive definite correlation matrices
 - **Multiple Variants**: Models with/without area effects and different household structures
 
@@ -136,11 +136,11 @@ Note that all specifications include individual random effects.
 
 The package implements random effects models for longitudinal data with the following complex non-hierarchical structure:
 
-- **Time-varying composition**: Household membership can change over time  
-- **Correlated effects**: Household random effects correlated within superhousehold clusters
+- **Time-varying household composition**: Household membership can change over time  
+- **Correlated random effects**: Household random effects correlated within superhousehold clusters
 - **Flexible between-household correlations**: Correlation structure depends on household relationship covariates
 
-Details of the structure are given after eq. (7) of the paper.
+Details of the data structure are given after eq. (7) of the paper.
 
 Applications include health outcomes, social behaviors, and economic variables in studies like the UK Household Longitudinal Study (UKHLS).
 
